@@ -5,9 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>連載小說產生器</title>
 
-  <!--
-    ① 外觀樣式區
-  -->
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;500&family=Noto+Sans+TC:wght@300;400;500&display=swap');
 
@@ -135,10 +132,58 @@
     .badge-gemini { background: #e8f0fd; color: var(--gemini-color); }
     .badge-claude { background: #fdeee8; color: var(--claude-color); }
 
-    /* ── 模型選擇 ── */
-    .model-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; align-items: end; }
+    /* ── 模型區塊 ── */
+    .model-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-bottom: 1rem; align-items: end; }
+    .model-row .field { margin-bottom: 0; }
 
-    /* ── ★ 設定檔管理列 ── */
+    /* ── 偵測按鈕 ── */
+    .btn-detect {
+      background: var(--accent);
+      color: #fdf8f0;
+      border: none;
+      border-radius: 4px;
+      padding: 8px 14px;
+      font-size: 12px;
+      font-family: 'Noto Sans TC', sans-serif;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.2s;
+      height: 36px;
+      align-self: end;
+    }
+    .btn-detect:hover    { background: var(--accent-hover); }
+    .btn-detect:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ── 模型偵測狀態列 ── */
+    .detect-status {
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 4px;
+      margin-bottom: 1rem;
+      display: none;
+      align-items: center;
+      gap: 6px;
+    }
+    .detect-status.show { display: flex; }
+    .detect-status.loading { background: #f0ede6; color: var(--text-muted); }
+    .detect-status.ok      { background: #edf5ed; color: var(--success); }
+    .detect-status.err     { background: #fdf0f0; color: var(--danger); }
+
+    /* ── 模型選項標籤 ── */
+    .model-tag {
+      display: inline-block;
+      font-size: 10px;
+      padding: 1px 5px;
+      border-radius: 3px;
+      margin-left: 4px;
+      vertical-align: middle;
+    }
+    .tag-quality { background: #fdeee8; color: #b05030; }
+    .tag-balance { background: #edf5ed; color: #2a5c2a; }
+    .tag-fast    { background: #e8f0fd; color: #1a5cbf; }
+    .tag-free    { background: #f0f8e8; color: #3a6020; }
+
+    /* ── 設定檔管理列 ── */
     .profile-bar {
       display: flex;
       gap: 8px;
@@ -164,7 +209,7 @@
     }
     .profile-actions { display: flex; gap: 6px; flex-wrap: wrap; }
 
-    /* ── ★ 對話框 ── */
+    /* ── 對話框 ── */
     .modal-overlay {
       display: none;
       position: fixed;
@@ -290,25 +335,38 @@
     }
     .autosave-dot.show { opacity: 1; }
 
+    /* ── 旋轉動畫 ── */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spin { display: inline-block; animation: spin 1s linear infinite; }
+
+    /* ── API 金鑰列（含偵測按鈕） ── */
+    .apikey-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: end;
+      margin-bottom: 1rem;
+    }
+    .apikey-row .field { margin-bottom: 0; }
+
     @media (max-width: 560px) {
       .row-2 { grid-template-columns: 1fr; }
       .model-row { grid-template-columns: 1fr; }
       .provider-selector { grid-template-columns: 1fr; }
       .page-header h1 { font-size: 20px; }
       .profile-bar { flex-direction: column; align-items: stretch; }
+      .apikey-row { grid-template-columns: 1fr; }
+      .model-row { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
 
-<!--
-  ② 介面結構區
--->
 <div class="container">
 
   <div class="page-header">
     <h1>連　載　小　說　產　生　器</h1>
-    <p>輸入大綱，逐章產出 · 支援 Grok / Gemini / Claude</p>
+    <p>輸入大綱，逐章產出 · 支援 Grok / Gemini / Claude · 自動偵測可用模型</p>
   </div>
 
   <!-- 小說設定卡片 -->
@@ -320,21 +378,21 @@
 
     <div id="settingsBody">
 
-      <!-- ★ 設定檔管理列 -->
+      <!-- 設定檔管理列 -->
       <div class="profile-bar">
         <label class="profile-label">📁 設定檔</label>
         <select id="profileSelect" onchange="loadSelectedProfile()">
           <option value="">— 選擇已儲存的設定 —</option>
         </select>
         <div class="profile-actions">
-          <button class="btn-secondary" onclick="openSaveModal()"   style="font-size:12px;padding:5px 12px;" title="將目前欄位另存為新設定檔">另存新檔</button>
-          <button class="btn-secondary" onclick="overwriteProfile()" style="font-size:12px;padding:5px 12px;" title="用目前欄位覆蓋選中的設定檔">覆蓋儲存</button>
-          <button class="btn-secondary" onclick="exportProfile()"   style="font-size:12px;padding:5px 12px;" title="下載為 .json 檔">匯出</button>
+          <button class="btn-secondary" onclick="openSaveModal()"   style="font-size:12px;padding:5px 12px;" title="另存新設定檔">另存新檔</button>
+          <button class="btn-secondary" onclick="overwriteProfile()" style="font-size:12px;padding:5px 12px;" title="覆蓋選中設定檔">覆蓋儲存</button>
+          <button class="btn-secondary" onclick="exportProfile()"   style="font-size:12px;padding:5px 12px;" title="下載為 .json">匯出</button>
           <label class="btn-secondary" style="font-size:12px;padding:5px 12px;cursor:pointer;margin-bottom:0;" title="載入 .json 設定檔">
             匯入
             <input type="file" accept=".json" onchange="importProfile(event)" style="display:none;" />
           </label>
-          <button class="btn-danger" onclick="deleteProfile()" style="font-size:12px;padding:5px 12px;" title="刪除目前選中的設定檔">刪除</button>
+          <button class="btn-danger" onclick="deleteProfile()" style="font-size:12px;padding:5px 12px;">刪除</button>
         </div>
         <span style="font-size:11px;color:var(--text-hint);width:100%;margin-top:2px;">
           <span class="autosave-dot" id="autosaveDot"></span>
@@ -365,7 +423,7 @@
         </div>
         <div id="provider-info-gemini" style="display:none;">
           <span class="provider-badge badge-gemini">Gemini</span>
-          <div class="hint">金鑰格式：AIza... ｜ 免費額度每天約 250 次請求（Flash 模型）｜ 完全不需信用卡</div>
+          <div class="hint">金鑰格式：AIza... ｜ 輸入金鑰後點「偵測可用模型」自動列出你的帳號可用的模型</div>
         </div>
         <div id="provider-info-claude" style="display:none;">
           <span class="provider-badge badge-claude">Claude</span>
@@ -373,18 +431,27 @@
         </div>
       </div>
 
-      <!-- API 金鑰 + 模型選擇 -->
-      <div class="model-row">
-        <div class="field" style="margin-bottom:0;">
+      <!-- API 金鑰 + 偵測按鈕 -->
+      <div class="apikey-row">
+        <div class="field">
           <label>API 金鑰</label>
-          <input type="password" id="apiKey" placeholder="貼上你的 API 金鑰" />
+          <input type="password" id="apiKey" placeholder="貼上你的 API 金鑰"
+            oninput="onApiKeyInput()" />
           <div class="hint">金鑰不會被儲存到設定檔，每次開啟仍需填入。</div>
         </div>
-        <div class="field" style="margin-bottom:0;">
-          <label>使用模型</label>
-          <select id="modelSelect" onchange="onModelChange()"></select>
-          <div class="hint" id="modelHint"></div>
-        </div>
+        <button class="btn-detect" id="detectBtn" onclick="detectModels()" title="自動偵測此金鑰可用的模型">
+          🔍 偵測可用模型
+        </button>
+      </div>
+
+      <!-- 偵測狀態列 -->
+      <div class="detect-status" id="detectStatus"></div>
+
+      <!-- 模型選擇 -->
+      <div class="field" style="margin-bottom:1rem;">
+        <label>使用模型</label>
+        <select id="modelSelect" onchange="onModelChange()"></select>
+        <div class="hint" id="modelHint"></div>
       </div>
 
       <hr />
@@ -476,7 +543,7 @@
 
 </div>
 
-<!-- ★ 另存新檔對話框 -->
+<!-- 另存新檔對話框 -->
 <div class="modal-overlay" id="saveModal">
   <div class="modal-box">
     <h3>另存設定檔</h3>
@@ -491,41 +558,56 @@
 
 
 <script>
-/*
-  ③ 供應商設定區
-*/
+/* ══════════════════════════════════════════
+   ③ 供應商設定區
+   ══════════════════════════════════════════ */
+
 var currentProvider = 'grok';
 
+/* 各供應商的「預設模型清單」（偵測失敗時的備用） */
 var PROVIDERS = {
   grok: {
     name: 'Grok',
     endpoint: 'https://api.x.ai/v1/chat/completions',
     buildBody: buildOpenAIBody,
+    canDetect: false,   // Grok 無 ListModels 公開端點
     models: [
-      { id:'grok-3',      label:'Grok 3',       tag:'quality', hint:'旗艦模型，創作品質最高，速度較慢' },
-      { id:'grok-3-mini', label:'Grok 3 Mini',   tag:'fast',    hint:'輕量快速版，適合草稿或測試，用量省' },
-      { id:'grok-2-1212', label:'Grok 2',         tag:'balance', hint:'上一代旗艦，速度與品質均衡' }
-    ]
+      { id:'grok-3',      label:'Grok 3',      tag:'quality', hint:'旗艦模型，創作品質最高，速度較慢' },
+      { id:'grok-3-mini', label:'Grok 3 Mini',  tag:'fast',    hint:'輕量快速版，適合草稿或測試' },
+      { id:'grok-2-1212', label:'Grok 2',        tag:'balance', hint:'上一代旗艦，速度與品質均衡' }
+    ],
+    defaultIndex: 1
   },
   gemini: {
     name: 'Gemini',
     endpoint: 'https://generativelanguage.googleapis.com/v1beta/models/{MODEL}:generateContent',
     buildBody: buildGeminiBody,
-    models: [
-      { id:'gemini-2.5-pro-preview-05-06',   label:'Gemini 2.5 Pro',   tag:'quality', hint:'最強推理與創作，但需付費方案' },
-      { id:'gemini-2.5-flash-preview-05-20', label:'Gemini 2.5 Flash', tag:'balance', hint:'速度快、品質好，免費額度最多，推薦首選' },
-      { id:'gemini-2.0-flash',               label:'Gemini 2.0 Flash', tag:'fast',    hint:'穩定版 Flash，免費額度充裕' }
-    ]
+    canDetect: true,    // 可呼叫 ListModels
+    listEndpoint: 'https://generativelanguage.googleapis.com/v1beta/models',
+    /* 已知支援 generateContent 且適合創作的模型，偵測後會篩選 */
+    knownModels: [
+      { id:'gemini-2.5-pro',         label:'Gemini 2.5 Pro',       tag:'quality', hint:'最強推理與創作，需付費方案' },
+      { id:'gemini-2.5-flash',       label:'Gemini 2.5 Flash',     tag:'balance', hint:'速度快、品質好，推薦首選' },
+      { id:'gemini-2.5-flash-lite',  label:'Gemini 2.5 Flash Lite',tag:'free',    hint:'最輕量，免費額度最多' },
+      { id:'gemini-2.0-flash',       label:'Gemini 2.0 Flash',     tag:'fast',    hint:'穩定版，免費額度充裕' },
+      { id:'gemini-2.0-flash-lite',  label:'Gemini 2.0 Flash Lite',tag:'free',    hint:'輕量穩定版' },
+      { id:'gemini-1.5-pro',         label:'Gemini 1.5 Pro',       tag:'balance', hint:'上一代 Pro，仍可使用' },
+      { id:'gemini-1.5-flash',       label:'Gemini 1.5 Flash',     tag:'fast',    hint:'上一代 Flash，免費額度充裕' }
+    ],
+    models: [],         // 由偵測結果填入，初始為空
+    defaultIndex: 0
   },
   claude: {
     name: 'Claude',
     endpoint: 'https://api.anthropic.com/v1/messages',
     buildBody: buildClaudeBody,
+    canDetect: false,
     models: [
       { id:'claude-opus-4-5',   label:'Claude Opus 4',    tag:'quality', hint:'頂級文學質感，繁中創作力最強，費用較高' },
       { id:'claude-sonnet-4-5', label:'Claude Sonnet 4',  tag:'balance', hint:'品質與速度均衡，日常連載推薦' },
       { id:'claude-haiku-3-5',  label:'Claude Haiku 3.5', tag:'fast',    hint:'速度最快、費用最低，適合草稿測試' }
-    ]
+    ],
+    defaultIndex: 1
   }
 };
 
@@ -541,28 +623,50 @@ function selectProvider(name) {
   document.getElementById('provider-info-' + name).style.display = 'block';
   document.getElementById('apiKey').value = '';
   document.getElementById('apiKey').placeholder = getKeyPlaceholder(name);
+
+  // 偵測按鈕：只有 Gemini 顯示
+  document.getElementById('detectBtn').style.display =
+    PROVIDERS[name].canDetect ? 'block' : 'none';
+
+  hideDetectStatus();
   renderModelSelect(name);
 }
 
-function renderModelSelect(providerName) {
+/* 渲染模型下拉選單 */
+function renderModelSelect(providerName, highlightFirst) {
   var provider = PROVIDERS[providerName];
   var select   = document.getElementById('modelSelect');
+  var models   = provider.models;
+
   select.innerHTML = '';
-  provider.models.forEach(function(m) {
+
+  if (!models || models.length === 0) {
+    var placeholder = document.createElement('option');
+    placeholder.value = '';
+    placeholder.textContent = '— 請先偵測可用模型 —';
+    select.appendChild(placeholder);
+    document.getElementById('modelHint').textContent = '';
+    return;
+  }
+
+  models.forEach(function(m) {
     var opt = document.createElement('option');
     opt.value = m.id;
-    var tagText = { quality:'★ 高品質', balance:'◎ 均衡', fast:'⚡ 快速' }[m.tag] || '';
-    opt.textContent = m.label + '  ' + tagText;
+    var tagText = { quality:'★ 高品質', balance:'◎ 均衡', fast:'⚡ 快速', free:'🆓 免費額度' }[m.tag] || '';
+    opt.textContent = m.label + (tagText ? '  ' + tagText : '');
     select.appendChild(opt);
   });
-  select.selectedIndex = provider.models.length > 1 ? 1 : 0;
+
+  var defaultIdx = (typeof provider.defaultIndex === 'number') ? provider.defaultIndex : 0;
+  select.selectedIndex = Math.min(defaultIdx, models.length - 1);
   onModelChange();
 }
 
 function onModelChange() {
   var provider  = PROVIDERS[currentProvider];
   var modelId   = document.getElementById('modelSelect').value;
-  var modelInfo = provider.models.find(function(m) { return m.id === modelId; });
+  var models    = provider.models || [];
+  var modelInfo = models.find(function(m) { return m.id === modelId; });
   document.getElementById('modelHint').textContent = modelInfo ? modelInfo.hint : '';
 }
 
@@ -573,6 +677,17 @@ function getKeyPlaceholder(name) {
   return '貼上你的 API 金鑰';
 }
 
+function onApiKeyInput() {
+  // 金鑰變更時，清除上次偵測結果（Gemini）
+  if (currentProvider === 'gemini') {
+    hideDetectStatus();
+    PROVIDERS.gemini.models = [];
+    renderModelSelect('gemini');
+  }
+}
+
+/* 初始化：預設顯示 Grok，隱藏偵測按鈕 */
+document.getElementById('detectBtn').style.display = 'none';
 renderModelSelect('grok');
 
 var settingsOpen = true;
@@ -582,17 +697,108 @@ function toggleSettings() {
   document.getElementById('collapseBtn').textContent = settingsOpen ? '收起 ▲' : '展開 ▼';
 }
 
+/* ══════════════════════════════════════════
+   ★ 自動偵測可用模型（Gemini ListModels）
+   ══════════════════════════════════════════ */
+
+function showDetectStatus(type, msg) {
+  var el = document.getElementById('detectStatus');
+  el.className = 'detect-status show ' + type;
+  el.innerHTML = msg;
+}
+function hideDetectStatus() {
+  document.getElementById('detectStatus').className = 'detect-status';
+}
+
+async function detectModels() {
+  var apiKey = document.getElementById('apiKey').value.trim();
+  if (!apiKey) { alert('請先填入 API 金鑰'); return; }
+
+  var provider = PROVIDERS[currentProvider];
+  if (!provider.canDetect) return;
+
+  var btn = document.getElementById('detectBtn');
+  btn.disabled = true;
+  btn.textContent = '偵測中…';
+  showDetectStatus('loading', '<span class="spin">⏳</span>&nbsp;正在連接 API 偵測可用模型…');
+
+  try {
+    /* 呼叫 Gemini ListModels */
+    var url = provider.listEndpoint + '?key=' + apiKey + '&pageSize=50';
+    var res = await fetch(url);
+    if (!res.ok) {
+      var errData = await res.json();
+      var errMsg = '無法取得模型清單（HTTP ' + res.status + '）';
+      if (errData.error && errData.error.message) errMsg = errData.error.message;
+      throw new Error(errMsg);
+    }
+    var data = await res.json();
+    var allModels = data.models || [];
+
+    /* 篩選：只保留支援 generateContent 的模型 */
+    var supported = allModels.filter(function(m) {
+      return m.supportedGenerationMethods &&
+             m.supportedGenerationMethods.indexOf('generateContent') >= 0;
+    }).map(function(m) {
+      /* name 格式是 "models/gemini-xxx"，取後半段 */
+      return m.name.replace('models/', '');
+    });
+
+    /* 對照 knownModels，保留已知且可用的，並補上標籤與說明 */
+    var matched = [];
+    provider.knownModels.forEach(function(km) {
+      /* 完全比對 或 以此 id 為前綴（處理帶版本號的情況） */
+      var found = supported.find(function(s) {
+        return s === km.id || s.startsWith(km.id + '-');
+      });
+      if (found) {
+        matched.push({
+          id:    found,    // 用 API 回傳的真實 ID
+          label: km.label,
+          tag:   km.tag,
+          hint:  km.hint
+        });
+      }
+    });
+
+    /* 若 API 回傳了 knownModels 沒有的模型，也加進去（去重） */
+    supported.forEach(function(s) {
+      var alreadyIn = matched.find(function(m) { return m.id === s; });
+      if (!alreadyIn && s.indexOf('gemini') >= 0) {
+        /* 只保留 gemini 系列，過濾掉 embedding/vision-only 等 */
+        matched.push({ id: s, label: s, tag: '', hint: '你的帳號可用的其他模型' });
+      }
+    });
+
+    if (matched.length === 0) {
+      throw new Error('沒有找到支援 generateContent 的 Gemini 模型，請確認金鑰是否正確');
+    }
+
+    provider.models = matched;
+    provider.defaultIndex = 0;
+    renderModelSelect(currentProvider);
+
+    showDetectStatus('ok',
+      '✅ 偵測完成！找到 <strong>' + matched.length + '</strong> 個可用模型，已自動選擇建議首選。');
+
+  } catch (err) {
+    showDetectStatus('err', '❌ 偵測失敗：' + err.message);
+    /* 偵測失敗時，載入備用清單 */
+    provider.models = provider.knownModels.slice();
+    renderModelSelect(currentProvider);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '🔍 偵測可用模型';
+  }
+}
+
 
 /* ══════════════════════════════════════════
-   ★ 設定檔管理區（新增區塊）
-   所有設定檔存在 localStorage 的 "novelProfiles" 陣列裡。
-   每一筆格式：{ name: "名稱", settings: { ...欄位值 } }
-   API 金鑰不存入設定檔（安全考量）。
+   ★ 設定檔管理區
    ══════════════════════════════════════════ */
 
 var STORAGE_KEY = 'novelProfiles';
 
-/* 從頁面收集目前欄位值（不含金鑰） */
 function collectSettings() {
   return {
     provider:   currentProvider,
@@ -606,11 +812,10 @@ function collectSettings() {
   };
 }
 
-/* 把設定物件填回頁面欄位 */
 function applySettings(s) {
   if (s.provider) {
-    selectProvider(s.provider);          // 先切換供應商（會重建模型選單）
-    if (s.model) {                       // 再設定模型
+    selectProvider(s.provider);
+    if (s.model) {
       var sel = document.getElementById('modelSelect');
       for (var i = 0; i < sel.options.length; i++) {
         if (sel.options[i].value === s.model) { sel.selectedIndex = i; break; }
@@ -626,19 +831,16 @@ function applySettings(s) {
   document.getElementById('wordCount').value  = s.wordCount   || '1000';
 }
 
-/* 讀取全部設定檔 */
 function loadAllProfiles() {
   try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
   catch(e) { return []; }
 }
 
-/* 寫入全部設定檔 */
 function saveAllProfiles(profiles) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(profiles));
   flashAutosave();
 }
 
-/* 重新渲染下拉選單；selectName 是要保持選中的名稱 */
 function refreshProfileSelect(selectName) {
   var profiles = loadAllProfiles();
   var sel      = document.getElementById('profileSelect');
@@ -656,19 +858,14 @@ function refreshProfileSelect(selectName) {
   }
 }
 
-/* 載入選中的設定檔 */
 function loadSelectedProfile() {
   var idx = document.getElementById('profileSelect').value;
   if (idx === '') return;
   var profiles = loadAllProfiles();
   var p = profiles[parseInt(idx)];
-  if (p) {
-    applySettings(p.settings);
-    showAutosaveLabel('已載入「' + p.name + '」');
-  }
+  if (p) { applySettings(p.settings); showAutosaveLabel('已載入「' + p.name + '」'); }
 }
 
-/* 開啟另存新檔對話框 */
 function openSaveModal() {
   document.getElementById('profileNameInput').value =
     document.getElementById('novelTitle').value.trim() || '';
@@ -677,7 +874,6 @@ function openSaveModal() {
 }
 function closeSaveModal() { document.getElementById('saveModal').classList.remove('open'); }
 
-/* 確認另存新檔 */
 function saveNewProfile() {
   var name = document.getElementById('profileNameInput').value.trim();
   if (!name) { alert('請輸入設定檔名稱'); return; }
@@ -689,7 +885,6 @@ function saveNewProfile() {
   showAutosaveLabel('已儲存「' + name + '」');
 }
 
-/* 覆蓋選中的設定檔 */
 function overwriteProfile() {
   var idx = parseInt(document.getElementById('profileSelect').value);
   if (isNaN(idx)) { alert('請先從下拉選單選擇要覆蓋的設定檔'); return; }
@@ -703,7 +898,6 @@ function overwriteProfile() {
   showAutosaveLabel('已覆蓋「' + name + '」');
 }
 
-/* 刪除選中的設定檔 */
 function deleteProfile() {
   var idx = parseInt(document.getElementById('profileSelect').value);
   if (isNaN(idx)) { alert('請先選擇要刪除的設定檔'); return; }
@@ -717,7 +911,6 @@ function deleteProfile() {
   showAutosaveLabel('已刪除「' + name + '」');
 }
 
-/* 匯出 .json */
 function exportProfile() {
   var idx      = parseInt(document.getElementById('profileSelect').value);
   var profiles = loadAllProfiles();
@@ -737,7 +930,6 @@ function exportProfile() {
   URL.revokeObjectURL(url);
 }
 
-/* 匯入 .json */
 function importProfile(event) {
   var file = event.target.files[0];
   if (!file) return;
@@ -745,9 +937,7 @@ function importProfile(event) {
   reader.onload = function(e) {
     try {
       var data = JSON.parse(e.target.result);
-      if (!data.name || !data.settings) {
-        alert('檔案格式不符，請匯入由本工具產生的 .json 設定檔'); return;
-      }
+      if (!data.name || !data.settings) { alert('檔案格式不符'); return; }
       var profiles = loadAllProfiles();
       var existing = profiles.findIndex(function(p) { return p.name === data.name; });
       if (existing >= 0) {
@@ -760,21 +950,17 @@ function importProfile(event) {
       refreshProfileSelect(data.name);
       applySettings(data.settings);
       showAutosaveLabel('已匯入「' + data.name + '」');
-    } catch(err) {
-      alert('檔案讀取失敗：' + err.message);
-    }
+    } catch(err) { alert('檔案讀取失敗：' + err.message); }
     event.target.value = '';
   };
   reader.readAsText(file);
 }
 
-/* 綠點閃爍動畫 */
 function flashAutosave() {
   var dot = document.getElementById('autosaveDot');
   dot.classList.add('show');
   setTimeout(function() { dot.classList.remove('show'); }, 1800);
 }
-/* 暫時顯示操作訊息，3 秒後恢復說明文字 */
 function showAutosaveLabel(msg) {
   var el = document.getElementById('autosaveLabel');
   el.textContent = msg;
@@ -782,22 +968,19 @@ function showAutosaveLabel(msg) {
   setTimeout(function() { el.textContent = '設定檔存在瀏覽器中，換電腦請用「匯出」備份'; }, 3000);
 }
 
-/* 按 Enter 確認對話框 */
 document.getElementById('profileNameInput').addEventListener('keydown', function(e) {
   if (e.key === 'Enter') saveNewProfile();
 });
-/* 點對話框背景關閉 */
 document.getElementById('saveModal').addEventListener('click', function(e) {
   if (e.target === this) closeSaveModal();
 });
 
-/* 頁面載入時同步下拉選單 */
 refreshProfileSelect();
 
 
-/*
-  ④ 提示詞 + API 呼叫區
-*/
+/* ══════════════════════════════════════════
+   ④ 提示詞 + API 呼叫區
+   ══════════════════════════════════════════ */
 
 function buildSystemPrompt(chapterNum) {
   var title      = document.getElementById('novelTitle').value.trim() || '（未命名）';
@@ -872,8 +1055,32 @@ function extractContent(data, providerName) {
   return '';
 }
 
+/* ── 友善的錯誤訊息解析 ── */
+function parseErrorMessage(err, providerName) {
+  var msg = err.message || String(err);
+  /* Gemini 額度用完 */
+  if (msg.indexOf('RESOURCE_EXHAUSTED') >= 0 || msg.indexOf('quota') >= 0 || msg.indexOf('Quota') >= 0) {
+    return '❌ API 額度已用完。\n' +
+      '• 若使用免費方案：請等待每日額度重置（通常次日太平洋時間 0 點）\n' +
+      '• 或在 Google AI Studio 升級至付費方案\n' +
+      '• 或改用其他供應商（Grok / Claude）';
+  }
+  /* Gemini 模型不存在 */
+  if (msg.indexOf('not found') >= 0 || msg.indexOf('NOT_FOUND') >= 0) {
+    return '❌ 模型不存在或你的帳號無法使用此模型。\n請點「偵測可用模型」重新取得你的帳號可用清單。';
+  }
+  /* 金鑰無效 */
+  if (msg.indexOf('API_KEY_INVALID') >= 0 || msg.indexOf('401') >= 0 || msg.indexOf('Unauthorized') >= 0) {
+    return '❌ API 金鑰無效，請確認金鑰是否正確且未過期。';
+  }
+  return '❌ 錯誤：' + msg;
+}
 
-/* 主要函式：產生新章節 */
+
+/* ══════════════════════════════════════════
+   ⑤ 章節管理區
+   ══════════════════════════════════════════ */
+
 var chapters = [];
 var currentIndex = -1;
 
@@ -883,13 +1090,15 @@ async function generateChapter() {
   var modelId = getCurrentModelId();
 
   if (!apiKey)  { setStatus('請先填入 API 金鑰', 'err'); return; }
+  if (!modelId) { setStatus('請先偵測並選擇可用模型', 'err'); return; }
   if (!outline) { setStatus('請輸入這章的大綱', 'err');  return; }
 
   var btn = document.getElementById('generateBtn');
   btn.disabled = true;
 
   var provider   = PROVIDERS[currentProvider];
-  var modelInfo  = provider.models.find(function(m) { return m.id === modelId; });
+  var models     = provider.models || [];
+  var modelInfo  = models.find(function(m) { return m.id === modelId; });
   var modelLabel = modelInfo ? modelInfo.label : modelId;
 
   setStatus('使用 ' + provider.name + ' · ' + modelLabel + ' 生成中，請稍候…');
@@ -905,10 +1114,10 @@ async function generateChapter() {
         body: provider.buildBody(systemPrompt, userMsg, modelId) }
     );
     if (!response.ok) {
-      var errData = await response.json();
-      var errMsg = '伺服器錯誤 HTTP ' + response.status;
+      var errData = await response.json().catch(function() { return {}; });
+      var errMsg = 'HTTP ' + response.status;
       if (errData.error && errData.error.message) errMsg = errData.error.message;
-      if (errData.message) errMsg = errData.message;
+      else if (errData.message) errMsg = errData.message;
       throw new Error(errMsg);
     }
     var data    = await response.json();
@@ -924,16 +1133,11 @@ async function generateChapter() {
     document.getElementById('nextChapterNum').textContent = chapters.length + 1;
     setStatus('');
   } catch (err) {
-    setStatus('錯誤：' + err.message, 'err');
+    setStatus(parseErrorMessage(err, currentProvider), 'err');
   } finally {
     btn.disabled = false;
   }
 }
-
-
-/*
-  ⑤ 章節管理區
-*/
 
 function showChapter(index) {
   var ch = chapters[index];
