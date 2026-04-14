@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>連載小說產生器</title>
+
+  <!--
+    ① 外觀樣式區
+    控制顏色、字體、排版。想改視覺效果找這裡。
+  -->
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;500&family=Noto+Sans+TC:wght@300;400;500&display=swap');
+
+    :root {
+      --bg:           #f5f2eb;
+      --surface:      #fdfaf4;
+      --border:       #d8d0be;
+      --text-main:    #2c2416;
+      --text-muted:   #7a6e5f;
+      --text-hint:    #b0a494;
+      --accent:       #5c3d1e;
+      --accent-hover: #3e2810;
+      --danger:       #8b2020;
+      --success:      #2a5c2a;
+
+      /* 各供應商的識別色 */
+      --grok-color:   #1a1a2e;
+      --gemini-color: #1a73e8;
+      --claude-color: #c96442;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Noto Sans TC', sans-serif;
+      background: var(--bg);
+      color: var(--text-main);
+      min-height: 100vh;
+      padding: 2rem 1rem;
+    }
+
+    .container { max-width: 780px; margin: 0 auto; }
+
+    .page-header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .page-header h1 {
+      font-family: 'Noto Serif TC', serif;
+      font-size: 26px;
+      font-weight: 500;
+      letter-spacing: 0.15em;
+      margin-bottom: 0.4rem;
+    }
+    .page-header p { font-size: 13px; color: var(--text-muted); }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 1.5rem;
+      margin-bottom: 1.25rem;
+    }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.25rem;
+    }
+    .card-title {
+      font-family: 'Noto Serif TC', serif;
+      font-size: 16px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      color: var(--text-muted);
+      letter-spacing: 0.05em;
+      margin-bottom: 5px;
+    }
+
+    input[type=text], input[type=password], textarea, select {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 8px 12px;
+      font-size: 14px;
+      font-family: 'Noto Sans TC', sans-serif;
+      color: var(--text-main);
+      transition: border-color 0.2s;
+      resize: vertical;
+    }
+    input:focus, textarea:focus, select:focus { outline: none; border-color: var(--accent); }
+    ::placeholder { color: var(--text-hint); }
+
+    .field { margin-bottom: 1rem; }
+    .field:last-child { margin-bottom: 0; }
+    .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .hint { font-size: 11px; color: var(--text-hint); margin-top: 4px; line-height: 1.5; }
+
+    /* ── 供應商選擇器 ── */
+    .provider-selector {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 1.25rem;
+    }
+    .provider-btn {
+      padding: 10px 8px;
+      border: 1.5px solid var(--border);
+      border-radius: 6px;
+      background: var(--bg);
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s;
+      font-family: 'Noto Sans TC', sans-serif;
+    }
+    .provider-btn:hover { border-color: var(--accent); }
+    .provider-btn .provider-name {
+      font-size: 14px;
+      font-weight: 500;
+      display: block;
+      margin-bottom: 2px;
+    }
+    .provider-btn .provider-sub {
+      font-size: 11px;
+      color: var(--text-hint);
+    }
+
+    /* 選中狀態：各供應商有自己的顏色 */
+    .provider-btn.active-grok {
+      border-color: var(--grok-color);
+      background: #f0f0f8;
+    }
+    .provider-btn.active-grok .provider-name { color: var(--grok-color); }
+
+    .provider-btn.active-gemini {
+      border-color: var(--gemini-color);
+      background: #eef4fd;
+    }
+    .provider-btn.active-gemini .provider-name { color: var(--gemini-color); }
+
+    .provider-btn.active-claude {
+      border-color: var(--claude-color);
+      background: #fdf2ee;
+    }
+    .provider-btn.active-claude .provider-name { color: var(--claude-color); }
+
+    /* 供應商說明小標籤 */
+    .provider-badge {
+      display: inline-block;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+    .badge-grok   { background: #e8e8f0; color: var(--grok-color); }
+    .badge-gemini { background: #e8f0fd; color: var(--gemini-color); }
+    .badge-claude { background: #fdeee8; color: var(--claude-color); }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fdf8f0;
+      border: none;
+      border-radius: 4px;
+      padding: 9px 22px;
+      font-size: 14px;
+      font-family: 'Noto Sans TC', sans-serif;
+      cursor: pointer;
+      letter-spacing: 0.05em;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .btn-primary:hover { background: var(--accent-hover); }
+    .btn-primary:active { transform: scale(0.98); }
+    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 7px 16px;
+      font-size: 13px;
+      font-family: 'Noto Sans TC', sans-serif;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-secondary:active { transform: scale(0.98); }
+
+    .btn-collapse {
+      background: none; border: none;
+      font-size: 12px; color: var(--text-hint);
+      cursor: pointer;
+    }
+    .btn-collapse:hover { color: var(--text-muted); }
+
+    .btn-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+    .status { font-size: 13px; color: var(--text-muted); }
+    .status.err { color: var(--danger); }
+    .status.ok  { color: var(--success); }
+
+    .output-box {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1.25rem 1.5rem;
+      font-family: 'Noto Serif TC', serif;
+      font-size: 15px;
+      line-height: 2.1;
+      color: var(--text-main);
+      white-space: pre-wrap;
+      min-height: 100px;
+    }
+
+    .chapter-meta { font-size: 11px; color: var(--text-hint); letter-spacing: 0.08em; margin-bottom: 4px; }
+    .chapter-outline-preview {
+      font-size: 13px; color: var(--text-muted);
+      margin-bottom: 1rem; padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    hr { border: none; border-top: 1px solid var(--border); margin: 1.25rem 0; }
+
+    .history-list { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+    .history-item {
+      display: flex; align-items: baseline; gap: 10px;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      cursor: pointer; font-size: 13px;
+      background: var(--bg);
+      transition: border-color 0.2s;
+    }
+    .history-item:hover { border-color: var(--accent); }
+    .history-item.active { border-color: var(--accent); background: var(--surface); }
+    .history-num { font-weight: 500; color: var(--accent); min-width: 40px; font-size: 12px; }
+    .history-preview { color: var(--text-muted); }
+    .empty-hint { font-size: 13px; color: var(--text-hint); text-align: center; padding: 1rem 0; }
+
+    @media (max-width: 560px) {
+      .row-2 { grid-template-columns: 1fr; }
+      .provider-selector { grid-template-columns: 1fr; }
+      .page-header h1 { font-size: 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<!--
+  ② 介面結構區
+  所有你看到的欄位、按鈕都在這裡。
+-->
+<div class="container">
+
+  <div class="page-header">
+    <h1>連　載　小　說　產　生　器</h1>
+    <p>輸入大綱，逐章產出 · 支援 Grok / Gemini / Claude</p>
+  </div>
+
+  <!-- 小說設定卡片 -->
+  <div class="card" id="settingsCard">
+    <div class="card-header">
+      <span class="card-title">小說設定</span>
+      <button class="btn-collapse" onclick="toggleSettings()" id="collapseBtn">收起 ▲</button>
+    </div>
+
+    <div id="settingsBody">
+
+      <!-- ── 供應商選擇區 ──
+           點選哪個，下方就顯示對應的 API key 說明 -->
+      <div class="field">
+        <label>選擇 AI 供應商</label>
+        <div class="provider-selector">
+          <div class="provider-btn active-grok" id="btn-grok" onclick="selectProvider('grok')">
+            <span class="provider-name">Grok</span>
+            <span class="provider-sub">xAI · console.x.ai</span>
+          </div>
+          <div class="provider-btn" id="btn-gemini" onclick="selectProvider('gemini')">
+            <span class="provider-name">Gemini</span>
+            <span class="provider-sub">Google · aistudio.google.com</span>
+          </div>
+          <div class="provider-btn" id="btn-claude" onclick="selectProvider('claude')">
+            <span class="provider-name">Claude</span>
+            <span class="provider-sub">Anthropic · console.anthropic.com</span>
+          </div>
+        </div>
+
+        <!-- 供應商說明：根據選擇動態顯示 -->
+        <div id="provider-info-grok">
+          <span class="provider-badge badge-grok">Grok</span>
+          <div class="hint">金鑰格式：xai-... ｜ 免費額度約 $25～$150 ｜ 繁中創作品質佳</div>
+        </div>
+        <div id="provider-info-gemini" style="display:none;">
+          <span class="provider-badge badge-gemini">Gemini</span>
+          <div class="hint">金鑰格式：AIza... ｜ 免費額度每天約 250 次請求（Flash 模型）｜ 完全不需信用卡</div>
+        </div>
+        <div id="provider-info-claude" style="display:none;">
+          <span class="provider-badge badge-claude">Claude</span>
+          <div class="hint">金鑰格式：sk-ant-... ｜ 需少量付費，繁中文學質感最高</div>
+        </div>
+      </div>
+
+      <!-- API 金鑰輸入：所有供應商共用這個欄位 -->
+      <div class="field">
+        <label>API 金鑰</label>
+        <input type="password" id="apiKey" placeholder="貼上你的 API 金鑰" />
+        <div class="hint">金鑰只存在這個分頁的記憶體中，關閉分頁後自動清除，不會上傳任何地方。</div>
+      </div>
+
+      <hr />
+
+      <div class="row-2">
+        <div class="field">
+          <label>小說標題</label>
+          <input type="text" id="novelTitle" placeholder="例：荒野之歌" />
+        </div>
+        <div class="field">
+          <label>類型 / 風格</label>
+          <input type="text" id="genre" placeholder="例：古風武俠、現代懸疑" />
+        </div>
+      </div>
+
+      <div class="field">
+        <label>主要人物</label>
+        <textarea id="characters" rows="2" placeholder="例：李明，20歲，沉默寡言的劍客；師傅陳老，嚴厲但內心善良…"></textarea>
+        <div class="hint">寫越詳細，每章的人物性格越穩定一致。</div>
+      </div>
+
+      <div class="field">
+        <label>世界觀 / 背景</label>
+        <textarea id="worldview" rows="2" placeholder="例：架空古代，武術盛行，江湖分南北兩派…"></textarea>
+      </div>
+
+      <div class="field">
+        <label>寫作風格要求</label>
+        <textarea id="styleReq" rows="2" placeholder="例：文字典雅，對話簡短有力，重視場景氣氛，每章結尾要有懸念…"></textarea>
+      </div>
+
+      <div class="field">
+        <label>每章目標字數</label>
+        <select id="wordCount">
+          <option value="500">精簡（約 500 字）</option>
+          <option value="1000" selected>標準（約 1000 字）</option>
+          <option value="1500">詳細（約 1500 字）</option>
+          <option value="2000">長篇（約 2000 字）</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- 產生新章節卡片 -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">產生新章節</span>
+      <span style="font-size:12px;color:var(--text-hint)">第 <span id="nextChapterNum">1</span> 章</span>
+    </div>
+    <div class="field">
+      <label>這章大綱</label>
+      <textarea id="chapterOutline" rows="5"
+        placeholder="描述這章的情節方向，例如：
+李明抵達長安城，在城門口與神秘黑衣人短暫交手，對方留下一封無名信後消失在人群中。李明在客棧拆開信，發現是師傅失蹤的線索…"></textarea>
+      <div class="hint">大綱越詳細，生成結果越貼近你的想像。</div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-primary" id="generateBtn" onclick="generateChapter()">產　生　這　章</button>
+      <span class="status" id="statusMsg"></span>
+    </div>
+  </div>
+
+  <!-- 生成結果卡片 -->
+  <div class="card" id="outputCard" style="display:none;">
+    <div class="card-header">
+      <div>
+        <div class="chapter-meta" id="chapterMeta"></div>
+        <div class="chapter-outline-preview" id="outlinePreview"></div>
+      </div>
+    </div>
+    <div class="btn-row" style="margin-bottom:1rem;">
+      <button class="btn-secondary" onclick="copyChapter()">複製本章</button>
+      <button class="btn-secondary" onclick="copyAll()">複製全文</button>
+      <button class="btn-secondary" onclick="exportTxt()">匯出 .txt</button>
+    </div>
+    <div class="output-box" id="outputBox"></div>
+  </div>
+
+  <!-- 章節歷史卡片 -->
+  <div class="card" id="historyCard" style="display:none;">
+    <div class="card-header">
+      <span class="card-title">已完成章節（<span id="histCount">0</span> 章）</span>
+      <button class="btn-secondary" onclick="exportTxt()" style="font-size:12px;padding:5px 12px;">匯出全部</button>
+    </div>
+    <div class="history-list" id="historyList">
+      <div class="empty-hint">尚未產生任何章節</div>
+    </div>
+  </div>
+
+</div>
+
+
+<script>
+/*
+  ③ 供應商設定區
+  記錄目前選擇的供應商，以及每個供應商對應的
+  API 網址和模型名稱。新增供應商只需在這裡加一組設定。
+*/
+
+// 目前選擇的供應商（預設 grok）
+var currentProvider = 'grok';
+
+// 每個供應商的 API 設定
+var PROVIDERS = {
+  grok: {
+    name: 'Grok',
+    // api.x.ai 是 xAI 的伺服器，使用 OpenAI 相容格式
+    endpoint: 'https://api.x.ai/v1/chat/completions',
+    model: 'grok-3',
+    // 組合請求的函式名稱（下方定義）
+    buildBody: buildOpenAIBody
+  },
+  gemini: {
+    name: 'Gemini',
+    // Gemini 使用不同的 API 格式，網址包含金鑰
+    endpoint: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent',
+    model: 'gemini-2.5-flash',
+    buildBody: buildGeminiBody
+  },
+  claude: {
+    name: 'Claude',
+    // Anthropic 的 API 端點
+    endpoint: 'https://api.anthropic.com/v1/messages',
+    model: 'claude-sonnet-4-5',
+    buildBody: buildClaudeBody
+  }
+};
+
+// 切換供應商：更新按鈕樣式 + 顯示對應說明
+function selectProvider(name) {
+  currentProvider = name;
+
+  // 重設所有按鈕樣式
+  ['grok', 'gemini', 'claude'].forEach(function(p) {
+    var btn = document.getElementById('btn-' + p);
+    btn.className = 'provider-btn';
+    document.getElementById('provider-info-' + p).style.display = 'none';
+  });
+
+  // 設定選中的按鈕
+  document.getElementById('btn-' + name).className = 'provider-btn active-' + name;
+  document.getElementById('provider-info-' + name).style.display = 'block';
+
+  // 清空金鑰欄位（切換供應商時避免填錯）
+  document.getElementById('apiKey').value = '';
+  document.getElementById('apiKey').placeholder = getKeyPlaceholder(name);
+}
+
+function getKeyPlaceholder(name) {
+  if (name === 'grok')   return '貼上 Grok 金鑰（格式：xai-...）';
+  if (name === 'gemini') return '貼上 Gemini 金鑰（格式：AIza...）';
+  if (name === 'claude') return '貼上 Claude 金鑰（格式：sk-ant-...）';
+  return '貼上你的 API 金鑰';
+}
+
+// 收起/展開設定
+var settingsOpen = true;
+function toggleSettings() {
+  settingsOpen = !settingsOpen;
+  document.getElementById('settingsBody').style.display = settingsOpen ? 'block' : 'none';
+  document.getElementById('collapseBtn').textContent = settingsOpen ? '收起 ▲' : '展開 ▼';
+}
+
+
+/*
+  ④ 系統提示詞組合區
+  把你填的所有設定組合成給 AI 的指令。
+  三個供應商共用同一份提示詞內容，
+  只是打包格式不同（各供應商 API 格式有差異）。
+*/
+
+function buildSystemPrompt(chapterNum) {
+  var title      = document.getElementById('novelTitle').value.trim() || '（未命名）';
+  var genre      = document.getElementById('genre').value.trim()       || '不限';
+  var characters = document.getElementById('characters').value.trim()  || '未設定';
+  var worldview  = document.getElementById('worldview').value.trim()   || '未設定';
+  var styleReq   = document.getElementById('styleReq').value.trim()    || '流暢自然';
+  var wordCount  = document.getElementById('wordCount').value;
+
+  // 附上前一章結尾，幫助 AI 銜接劇情
+  var continuityContext = '';
+  if (chapters.length > 0) {
+    continuityContext = '\n\n【上一章結尾（供銜接參考）】\n' + chapters[chapters.length - 1].content.slice(-200);
+  }
+
+  return '你是一位專業的繁體中文小說作家，正在撰寫連載小說的第 ' + chapterNum + ' 章。\n\n'
+    + '【小說標題】' + title + '\n'
+    + '【類型與風格】' + genre + '\n'
+    + '【主要人物設定】\n' + characters + '\n'
+    + '【世界觀與背景】\n' + worldview + '\n'
+    + '【寫作風格要求】\n' + styleReq
+    + continuityContext + '\n\n'
+    + '【寫作規則】\n'
+    + '- 語言：繁體中文\n'
+    + '- 字數：約 ' + wordCount + ' 字（不超過 ' + Math.round(parseInt(wordCount) * 1.25) + ' 字）\n'
+    + '- 直接開始正文，不要輸出章節標題或任何前言\n'
+    + '- 融合場景描寫、人物內心獨白與對話\n'
+    + '- 結尾帶有往下延伸的張力或懸念\n'
+    + '- 保持人物性格與前章一致';
+}
+
+function buildUserMessage(chapterNum, outline) {
+  return '【第 ' + chapterNum + ' 章大綱】\n' + outline + '\n\n請根據以上大綱撰寫這一章。';
+}
+
+
+/*
+  ⑤ API 呼叫區
+  三個供應商的 API 格式不同，所以各自有一個
+  「組裝請求內容」的函式，以及「解析回應」的函式。
+
+  Grok 和 Claude 使用類似的 messages 格式，
+  Gemini 格式比較不同，需要特別處理。
+*/
+
+// ── Grok 格式（OpenAI 相容）──
+function buildOpenAIBody(systemPrompt, userMsg, provider) {
+  return JSON.stringify({
+    model: provider.model,
+    max_tokens: 2500,
+    temperature: 0.88,
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user',   content: userMsg }
+    ]
+  });
+}
+
+// ── Gemini 格式（Google 專用）──
+function buildGeminiBody(systemPrompt, userMsg, provider) {
+  return JSON.stringify({
+    // Gemini 把系統指令和用戶訊息分開放
+    system_instruction: { parts: [{ text: systemPrompt }] },
+    contents: [{ role: 'user', parts: [{ text: userMsg }] }],
+    generationConfig: { maxOutputTokens: 2500, temperature: 0.88 }
+  });
+}
+
+// ── Claude 格式（Anthropic 專用）──
+function buildClaudeBody(systemPrompt, userMsg, provider) {
+  return JSON.stringify({
+    model: provider.model,
+    max_tokens: 2500,
+    system: systemPrompt,
+    messages: [{ role: 'user', content: userMsg }]
+  });
+}
+
+// 組合各供應商的請求 headers
+function buildHeaders(apiKey, providerName) {
+  if (providerName === 'grok') {
+    // Grok：用 Bearer Token 驗證
+    return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey };
+  }
+  if (providerName === 'gemini') {
+    // Gemini：金鑰放在 URL 裡，header 只需 Content-Type
+    return { 'Content-Type': 'application/json' };
+  }
+  if (providerName === 'claude') {
+    // Claude：用 x-api-key header，並需指定 API 版本
+    return {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    };
+  }
+  return { 'Content-Type': 'application/json' };
+}
+
+// 組合各供應商的請求 URL
+function buildEndpoint(provider, providerName, apiKey) {
+  if (providerName === 'gemini') {
+    // Gemini 把金鑰附在網址後面
+    return provider.endpoint + '?key=' + apiKey;
+  }
+  return provider.endpoint;
+}
+
+// 從各供應商的回應中取出生成的文字
+function extractContent(data, providerName) {
+  if (providerName === 'grok' || providerName === 'claude') {
+    // Grok 和 Claude 回應格式相似
+    if (providerName === 'grok') return data.choices[0].message.content.trim();
+    return data.content[0].text.trim();
+  }
+  if (providerName === 'gemini') {
+    // Gemini 的回應結構不同
+    return data.candidates[0].content.parts[0].text.trim();
+  }
+  return '';
+}
+
+
+/*
+  主要函式：產生新章節
+  流程：驗證輸入 → 組合提示詞 → 送出 API 請求 → 顯示結果
+*/
+var chapters = [];
+var currentIndex = -1;
+
+async function generateChapter() {
+  var apiKey  = document.getElementById('apiKey').value.trim();
+  var outline = document.getElementById('chapterOutline').value.trim();
+
+  if (!apiKey)  { setStatus('請先填入 API 金鑰', 'err'); return; }
+  if (!outline) { setStatus('請輸入這章的大綱', 'err');  return; }
+
+  var btn = document.getElementById('generateBtn');
+  btn.disabled = true;
+
+  var provider = PROVIDERS[currentProvider];
+  setStatus('使用 ' + provider.name + ' 生成中，請稍候…');
+
+  var chapterNum   = chapters.length + 1;
+  var systemPrompt = buildSystemPrompt(chapterNum);
+  var userMsg      = buildUserMessage(chapterNum, outline);
+
+  try {
+    var response = await fetch(
+      buildEndpoint(provider, currentProvider, apiKey),
+      {
+        method: 'POST',
+        headers: buildHeaders(apiKey, currentProvider),
+        body: provider.buildBody(systemPrompt, userMsg, provider)
+      }
+    );
+
+    if (!response.ok) {
+      var errData = await response.json();
+      var errMsg = '伺服器錯誤 HTTP ' + response.status;
+      if (errData.error && errData.error.message) errMsg = errData.error.message;
+      if (errData.message) errMsg = errData.message;
+      throw new Error(errMsg);
+    }
+
+    var data    = await response.json();
+    var content = extractContent(data, currentProvider);
+
+    chapters.push({ num: chapterNum, outline: outline, content: content, provider: provider.name });
+    currentIndex = chapters.length - 1;
+
+    showChapter(currentIndex);
+    updateHistory();
+    document.getElementById('chapterOutline').value = '';
+    document.getElementById('nextChapterNum').textContent = chapters.length + 1;
+    setStatus('');
+
+  } catch (err) {
+    setStatus('錯誤：' + err.message, 'err');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+
+/*
+  ⑥ 章節管理區
+  顯示內容、維護歷史列表、複製、匯出 txt。
+*/
+
+function showChapter(index) {
+  var ch = chapters[index];
+  currentIndex = index;
+
+  document.getElementById('outputCard').style.display   = 'block';
+  document.getElementById('chapterMeta').textContent    = '第 ' + ch.num + ' 章　·　由 ' + ch.provider + ' 生成';
+  document.getElementById('outlinePreview').textContent = '大綱：' + ch.outline;
+  document.getElementById('outputBox').textContent      = ch.content;
+
+  document.querySelectorAll('.history-item').forEach(function(el, i) {
+    el.classList.toggle('active', chapters.length - 1 - i === index);
+  });
+}
+
+function updateHistory() {
+  document.getElementById('historyCard').style.display = 'block';
+  document.getElementById('histCount').textContent     = chapters.length;
+
+  var listEl = document.getElementById('historyList');
+  listEl.innerHTML = chapters.slice().reverse().map(function(ch, reversedI) {
+    var originalIndex = chapters.length - 1 - reversedI;
+    var preview = ch.outline.slice(0, 40) + (ch.outline.length > 40 ? '…' : '');
+    return '<div class="history-item ' + (originalIndex === currentIndex ? 'active' : '') + '" '
+         + 'onclick="showChapter(' + originalIndex + ')">'
+         + '<span class="history-num">第 ' + ch.num + ' 章</span>'
+         + '<span class="history-preview">' + preview + '</span>'
+         + '</div>';
+  }).join('');
+}
+
+function copyChapter() {
+  if (currentIndex < 0) return;
+  navigator.clipboard.writeText(chapters[currentIndex].content).then(function() {
+    setStatus('已複製本章！', 'ok');
+    setTimeout(function() { setStatus(''); }, 2000);
+  });
+}
+
+function copyAll() {
+  if (!chapters.length) return;
+  var all = chapters.map(function(ch) {
+    return '第 ' + ch.num + ' 章\n\n' + ch.content;
+  }).join('\n\n────────────\n\n');
+  navigator.clipboard.writeText(all).then(function() {
+    setStatus('已複製全文！', 'ok');
+    setTimeout(function() { setStatus(''); }, 2000);
+  });
+}
+
+function exportTxt() {
+  if (!chapters.length) { setStatus('還沒有任何章節可匯出', 'err'); return; }
+  var title = document.getElementById('novelTitle').value.trim() || '連載小說';
+  var all   = chapters.map(function(ch) {
+    return '第 ' + ch.num + ' 章\n\n' + ch.content;
+  }).join('\n\n────────────\n\n');
+  var blob = new Blob([all], { type: 'text/plain;charset=utf-8' });
+  var url  = URL.createObjectURL(blob);
+  var a    = document.createElement('a');
+  a.href = url; a.download = title + '.txt'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function setStatus(msg, type) {
+  var el        = document.getElementById('statusMsg');
+  el.textContent = msg;
+  el.className   = 'status' + (type ? ' ' + type : '');
+}
+</script>
+</body>
+</html>
