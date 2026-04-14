@@ -132,11 +132,9 @@
     .badge-gemini { background: #e8f0fd; color: var(--gemini-color); }
     .badge-claude { background: #fdeee8; color: var(--claude-color); }
 
-    /* ── 模型區塊 ── */
     .model-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-bottom: 1rem; align-items: end; }
     .model-row .field { margin-bottom: 0; }
 
-    /* ── 偵測按鈕 ── */
     .btn-detect {
       background: var(--accent);
       color: #fdf8f0;
@@ -154,7 +152,6 @@
     .btn-detect:hover    { background: var(--accent-hover); }
     .btn-detect:disabled { opacity: 0.5; cursor: not-allowed; }
 
-    /* ── 模型偵測狀態列 ── */
     .detect-status {
       font-size: 12px;
       padding: 6px 10px;
@@ -169,7 +166,6 @@
     .detect-status.ok      { background: #edf5ed; color: var(--success); }
     .detect-status.err     { background: #fdf0f0; color: var(--danger); }
 
-    /* ── 模型選項標籤 ── */
     .model-tag {
       display: inline-block;
       font-size: 10px;
@@ -183,7 +179,6 @@
     .tag-fast    { background: #e8f0fd; color: #1a5cbf; }
     .tag-free    { background: #f0f8e8; color: #3a6020; }
 
-    /* ── 設定檔管理列 ── */
     .profile-bar {
       display: flex;
       gap: 8px;
@@ -209,7 +204,6 @@
     }
     .profile-actions { display: flex; gap: 6px; flex-wrap: wrap; }
 
-    /* ── 對話框 ── */
     .modal-overlay {
       display: none;
       position: fixed;
@@ -225,14 +219,15 @@
       border: 1px solid var(--border);
       border-radius: 8px;
       padding: 1.75rem;
-      width: 340px;
-      max-width: 90vw;
+      width: 400px;
+      max-width: 92vw;
+      max-height: 85vh;
+      overflow-y: auto;
     }
     .modal-box h3 { font-family: 'Noto Serif TC', serif; font-size: 15px; margin-bottom: 1rem; }
     .modal-box input { margin-bottom: 1rem; }
-    .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+    .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 1rem; }
 
-    /* ── 通用按鈕 ── */
     .btn-primary {
       background: var(--accent);
       color: #fdf8f0;
@@ -284,6 +279,7 @@
     .status.err { color: var(--danger); }
     .status.ok  { color: var(--success); }
 
+    /* ── 輸出框（可編輯模式） ── */
     .output-box {
       background: var(--bg);
       border: 1px solid var(--border);
@@ -296,6 +292,29 @@
       white-space: pre-wrap;
       min-height: 100px;
     }
+    .output-box[contenteditable="true"] {
+      border-color: var(--accent);
+      outline: none;
+      background: #fefcf6;
+    }
+    .output-box[contenteditable="true"]:focus {
+      box-shadow: 0 0 0 2px rgba(92,61,30,0.12);
+    }
+
+    /* ── 編輯模式工具列 ── */
+    .edit-toolbar {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      background: #fdf2e6;
+      border: 1px solid #e0c8a8;
+      border-radius: 4px;
+      margin-bottom: 8px;
+      font-size: 12px;
+      color: var(--accent);
+    }
+    .edit-toolbar.show { display: flex; }
 
     .chapter-meta { font-size: 11px; color: var(--text-hint); letter-spacing: 0.08em; margin-bottom: 4px; }
     .chapter-outline-preview {
@@ -319,10 +338,125 @@
     .history-item:hover { border-color: var(--accent); }
     .history-item.active { border-color: var(--accent); background: var(--surface); }
     .history-num { font-weight: 500; color: var(--accent); min-width: 40px; font-size: 12px; }
-    .history-preview { color: var(--text-muted); }
+    .history-preview { color: var(--text-muted); flex: 1; }
+    .history-summary-badge {
+      font-size: 10px;
+      padding: 1px 6px;
+      border-radius: 8px;
+      background: #edf5ed;
+      color: var(--success);
+      white-space: nowrap;
+    }
     .empty-hint { font-size: 13px; color: var(--text-hint); text-align: center; padding: 1rem 0; }
 
-    /* ── 自動儲存提示 ── */
+    /* ── 摘要區 ── */
+    .summary-box {
+      background: #f0f5f0;
+      border: 1px solid #c8d8c8;
+      border-radius: 4px;
+      padding: 10px 14px;
+      font-size: 13px;
+      color: #3a5c3a;
+      line-height: 1.7;
+      margin-top: 8px;
+      white-space: pre-wrap;
+    }
+
+    /* ── 自動摘要切換 ── */
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      margin-bottom: 1rem;
+    }
+    .toggle-label { font-size: 13px; color: var(--text-muted); flex: 1; }
+    .toggle-hint  { font-size: 11px; color: var(--text-hint); }
+
+    /* ── Toggle Switch ── */
+    .switch { position: relative; display: inline-block; width: 36px; height: 20px; flex-shrink: 0; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute; cursor: pointer; inset: 0;
+      background: #ccc; border-radius: 20px; transition: 0.3s;
+    }
+    .slider:before {
+      content: ''; position: absolute;
+      height: 14px; width: 14px; left: 3px; bottom: 3px;
+      background: white; border-radius: 50%; transition: 0.3s;
+    }
+    input:checked + .slider { background: var(--accent); }
+    input:checked + .slider:before { transform: translateX(16px); }
+
+    /* ── 上下文設定區 ── */
+    .context-settings {
+      background: #faf8f4;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+    .context-settings-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-main);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* ── 匯出選擇對話框 ── */
+    .export-chapter-list {
+      max-height: 280px;
+      overflow-y: auto;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      margin-bottom: 1rem;
+    }
+    .export-chapter-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .export-chapter-item:last-child { border-bottom: none; }
+    .export-chapter-item:hover { background: var(--bg); }
+    .export-chapter-item input[type=checkbox] { width: auto; cursor: pointer; }
+    .export-select-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+      font-size: 12px;
+    }
+    .export-select-row button {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 3px 10px;
+      font-size: 12px;
+      cursor: pointer;
+      color: var(--text-muted);
+      font-family: 'Noto Sans TC', sans-serif;
+    }
+    .export-select-row button:hover { border-color: var(--accent); color: var(--accent); }
+    .export-format-row {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 10px;
+      font-size: 13px;
+    }
+    .export-format-row label { margin-bottom: 0; color: var(--text-main); font-size: 13px; display: flex; align-items: center; gap: 4px; cursor: pointer; }
+    .export-format-row input[type=radio] { width: auto; }
+
+    /* ── 自動儲存 ── */
     .autosave-dot {
       display: inline-block;
       width: 6px; height: 6px;
@@ -335,11 +469,9 @@
     }
     .autosave-dot.show { opacity: 1; }
 
-    /* ── 旋轉動畫 ── */
     @keyframes spin { to { transform: rotate(360deg); } }
     .spin { display: inline-block; animation: spin 1s linear infinite; }
 
-    /* ── API 金鑰列（含偵測按鈕） ── */
     .apikey-row {
       display: grid;
       grid-template-columns: 1fr auto;
@@ -349,6 +481,31 @@
     }
     .apikey-row .field { margin-bottom: 0; }
 
+    /* ── 重試模式提示條 ── */
+    .retry-notice {
+      display: none;
+      padding: 8px 12px;
+      background: #fdf5e8;
+      border: 1px solid #e8d0a0;
+      border-radius: 4px;
+      font-size: 12px;
+      color: #7a5520;
+      margin-bottom: 1rem;
+      align-items: center;
+      gap: 8px;
+    }
+    .retry-notice.show { display: flex; }
+    .retry-notice button {
+      background: none;
+      border: none;
+      color: var(--accent);
+      cursor: pointer;
+      font-size: 12px;
+      font-family: 'Noto Sans TC', sans-serif;
+      text-decoration: underline;
+      padding: 0;
+    }
+
     @media (max-width: 560px) {
       .row-2 { grid-template-columns: 1fr; }
       .model-row { grid-template-columns: 1fr; }
@@ -356,7 +513,6 @@
       .page-header h1 { font-size: 20px; }
       .profile-bar { flex-direction: column; align-items: stretch; }
       .apikey-row { grid-template-columns: 1fr; }
-      .model-row { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -366,7 +522,7 @@
 
   <div class="page-header">
     <h1>連　載　小　說　產　生　器</h1>
-    <p>輸入大綱，逐章產出 · 支援 Grok / Gemini / Claude · 自動偵測可用模型</p>
+    <p>輸入大綱，逐章產出 · 支援 Grok / Gemini / Claude · 自動摘要維持上下文連貫</p>
   </div>
 
   <!-- 小說設定卡片 -->
@@ -385,10 +541,10 @@
           <option value="">— 選擇已儲存的設定 —</option>
         </select>
         <div class="profile-actions">
-          <button class="btn-secondary" onclick="openSaveModal()"   style="font-size:12px;padding:5px 12px;" title="另存新設定檔">另存新檔</button>
-          <button class="btn-secondary" onclick="overwriteProfile()" style="font-size:12px;padding:5px 12px;" title="覆蓋選中設定檔">覆蓋儲存</button>
-          <button class="btn-secondary" onclick="exportProfile()"   style="font-size:12px;padding:5px 12px;" title="下載為 .json">匯出</button>
-          <label class="btn-secondary" style="font-size:12px;padding:5px 12px;cursor:pointer;margin-bottom:0;" title="載入 .json 設定檔">
+          <button class="btn-secondary" onclick="openSaveModal()"    style="font-size:12px;padding:5px 12px;">另存新檔</button>
+          <button class="btn-secondary" onclick="overwriteProfile()" style="font-size:12px;padding:5px 12px;">覆蓋儲存</button>
+          <button class="btn-secondary" onclick="exportProfile()"    style="font-size:12px;padding:5px 12px;">匯出</button>
+          <label class="btn-secondary" style="font-size:12px;padding:5px 12px;cursor:pointer;margin-bottom:0;">
             匯入
             <input type="file" accept=".json" onchange="importProfile(event)" style="display:none;" />
           </label>
@@ -431,12 +587,11 @@
         </div>
       </div>
 
-      <!-- API 金鑰 + 偵測按鈕 -->
+      <!-- API 金鑰 -->
       <div class="apikey-row">
         <div class="field">
           <label>API 金鑰</label>
-          <input type="password" id="apiKey" placeholder="貼上你的 API 金鑰"
-            oninput="onApiKeyInput()" />
+          <input type="password" id="apiKey" placeholder="貼上你的 API 金鑰" oninput="onApiKeyInput()" />
           <div class="hint">金鑰不會被儲存到設定檔，每次開啟仍需填入。</div>
         </div>
         <button class="btn-detect" id="detectBtn" onclick="detectModels()" title="自動偵測此金鑰可用的模型">
@@ -444,7 +599,6 @@
         </button>
       </div>
 
-      <!-- 偵測狀態列 -->
       <div class="detect-status" id="detectStatus"></div>
 
       <!-- 模型選擇 -->
@@ -492,7 +646,44 @@
           <option value="2000">長篇（約 2000 字）</option>
         </select>
       </div>
-    </div>
+
+      <hr />
+
+      <!-- ★ 上下文連貫設定 -->
+      <div style="font-family:'Noto Serif TC',serif;font-size:14px;font-weight:500;margin-bottom:10px;letter-spacing:0.05em;">上下文連貫設定</div>
+
+      <!-- 自動摘要開關 -->
+      <div class="toggle-row">
+        <div style="flex:1;">
+          <div class="toggle-label">✦ 自動摘要（強烈建議開啟）</div>
+          <div class="toggle-hint">每章生成後自動產生 150 字摘要，寫新章節時一併送入 AI，維持劇情連貫</div>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="autoSummaryToggle" checked />
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <!-- 上下文範圍 -->
+      <div class="field">
+        <label>送入 AI 的章節摘要數量（最近 N 章）</label>
+        <select id="contextDepth">
+          <option value="3">最近 3 章摘要</option>
+          <option value="5" selected>最近 5 章摘要（建議）</option>
+          <option value="10">最近 10 章摘要</option>
+          <option value="999">全部章節摘要</option>
+        </select>
+        <div class="hint">章節越多費用越高；5 章通常已足夠維持良好連貫性。</div>
+      </div>
+
+      <!-- 故事備忘錄 -->
+      <div class="field">
+        <label>故事備忘錄（每次生成都會送給 AI）</label>
+        <textarea id="storyMemo" rows="3" placeholder="例：目前李明持有紅玉令牌（第3章取得）；陳老失蹤原因仍未揭曉；南派掌門疑似是幕後黑手…&#10;&#10;請自行記錄重要伏筆、人物狀態、未解決衝突，幫助 AI 保持邏輯一致。"></textarea>
+        <div class="hint">這是你手動維護的「世界狀態」，AI 會依此維持邏輯一致性。</div>
+      </div>
+
+    </div><!-- /settingsBody -->
   </div>
 
   <!-- 產生新章節 -->
@@ -501,6 +692,13 @@
       <span class="card-title">產生新章節</span>
       <span style="font-size:12px;color:var(--text-hint)">第 <span id="nextChapterNum">1</span> 章</span>
     </div>
+
+    <!-- 重試模式提示 -->
+    <div class="retry-notice" id="retryNotice">
+      ✏️ 重試模式：目前大綱為第 <span id="retryChapterNum">?</span> 章，修改後點「重新生成」將取代原章節。
+      <button onclick="cancelRetry()">取消重試</button>
+    </div>
+
     <div class="field">
       <label>這章大綱</label>
       <textarea id="chapterOutline" rows="5"
@@ -510,6 +708,7 @@
     </div>
     <div class="btn-row">
       <button class="btn-primary" id="generateBtn" onclick="generateChapter()">產　生　這　章</button>
+      <button class="btn-secondary" id="regenBtn" onclick="regenChapter()" style="display:none;">🔄 重新生成</button>
       <span class="status" id="statusMsg"></span>
     </div>
   </div>
@@ -522,26 +721,43 @@
         <div class="chapter-outline-preview" id="outlinePreview"></div>
       </div>
     </div>
-    <div class="btn-row" style="margin-bottom:1rem;">
+
+    <!-- 操作按鈕列 -->
+    <div class="btn-row" style="margin-bottom:0.75rem;">
       <button class="btn-secondary" onclick="copyChapter()">複製本章</button>
-      <button class="btn-secondary" onclick="copyAll()">複製全文</button>
-      <button class="btn-secondary" onclick="exportTxt()">匯出 .txt</button>
+      <button class="btn-secondary" onclick="openExportModal()">📦 打包匯出</button>
+      <button class="btn-secondary" id="editToggleBtn" onclick="toggleEdit()">✏️ 編輯內容</button>
+      <button class="btn-secondary" onclick="retryCurrentChapter()">↩ 修改大綱重試</button>
     </div>
+
+    <!-- 編輯模式工具列 -->
+    <div class="edit-toolbar" id="editToolbar">
+      ✏️ 編輯模式：直接在下方修改內容，完成後點「儲存編輯」
+      <button class="btn-primary" style="padding:4px 14px;font-size:12px;" onclick="saveEdit()">儲存編輯</button>
+      <button class="btn-secondary" style="padding:4px 12px;font-size:12px;" onclick="cancelEdit()">取消</button>
+    </div>
+
     <div class="output-box" id="outputBox"></div>
+
+    <!-- 摘要區 -->
+    <div id="summarySection" style="display:none;margin-top:1rem;">
+      <div style="font-size:11px;color:var(--text-hint);margin-bottom:4px;letter-spacing:0.05em;">📋 AI 自動摘要（用於後續章節上下文）</div>
+      <div class="summary-box" id="summaryBox"></div>
+    </div>
   </div>
 
   <!-- 章節歷史 -->
   <div class="card" id="historyCard" style="display:none;">
     <div class="card-header">
       <span class="card-title">已完成章節（<span id="histCount">0</span> 章）</span>
-      <button class="btn-secondary" onclick="exportTxt()" style="font-size:12px;padding:5px 12px;">匯出全部</button>
+      <button class="btn-secondary" onclick="openExportModal()" style="font-size:12px;padding:5px 12px;">📦 打包匯出</button>
     </div>
     <div class="history-list" id="historyList">
       <div class="empty-hint">尚未產生任何章節</div>
     </div>
   </div>
 
-</div>
+</div><!-- /container -->
 
 <!-- 另存新檔對話框 -->
 <div class="modal-overlay" id="saveModal">
@@ -556,6 +772,39 @@
   </div>
 </div>
 
+<!-- ★ 打包匯出對話框 -->
+<div class="modal-overlay" id="exportModal">
+  <div class="modal-box">
+    <h3>📦 打包匯出章節</h3>
+
+    <div class="export-select-row">
+      <button onclick="exportSelectAll()">全選</button>
+      <button onclick="exportSelectNone()">全不選</button>
+      <button onclick="exportSelectLast(3)">最近 3 章</button>
+      <button onclick="exportSelectLast(5)">最近 5 章</button>
+    </div>
+
+    <div class="export-chapter-list" id="exportChapterList"></div>
+
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">匯出格式</div>
+    <div class="export-format-row">
+      <label><input type="radio" name="exportFmt" value="txt" checked /> 純文字 .txt</label>
+      <label><input type="radio" name="exportFmt" value="md"  /> Markdown .md（含章節標題）</label>
+    </div>
+
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">是否包含各章摘要</div>
+    <div class="export-format-row">
+      <label><input type="radio" name="exportSummary" value="no" checked /> 只有正文</label>
+      <label><input type="radio" name="exportSummary" value="yes" /> 正文 + 摘要</label>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeExportModal()">取消</button>
+      <button class="btn-primary"   onclick="doExport()">下載檔案</button>
+    </div>
+  </div>
+</div>
+
 
 <script>
 /* ══════════════════════════════════════════
@@ -564,13 +813,12 @@
 
 var currentProvider = 'grok';
 
-/* 各供應商的「預設模型清單」（偵測失敗時的備用） */
 var PROVIDERS = {
   grok: {
     name: 'Grok',
     endpoint: 'https://api.x.ai/v1/chat/completions',
     buildBody: buildOpenAIBody,
-    canDetect: false,   // Grok 無 ListModels 公開端點
+    canDetect: false,
     models: [
       { id:'grok-3',      label:'Grok 3',      tag:'quality', hint:'旗艦模型，創作品質最高，速度較慢' },
       { id:'grok-3-mini', label:'Grok 3 Mini',  tag:'fast',    hint:'輕量快速版，適合草稿或測試' },
@@ -582,19 +830,18 @@ var PROVIDERS = {
     name: 'Gemini',
     endpoint: 'https://generativelanguage.googleapis.com/v1beta/models/{MODEL}:generateContent',
     buildBody: buildGeminiBody,
-    canDetect: true,    // 可呼叫 ListModels
+    canDetect: true,
     listEndpoint: 'https://generativelanguage.googleapis.com/v1beta/models',
-    /* 已知支援 generateContent 且適合創作的模型，偵測後會篩選 */
     knownModels: [
-      { id:'gemini-2.5-pro',         label:'Gemini 2.5 Pro',       tag:'quality', hint:'最強推理與創作，需付費方案' },
-      { id:'gemini-2.5-flash',       label:'Gemini 2.5 Flash',     tag:'balance', hint:'速度快、品質好，推薦首選' },
-      { id:'gemini-2.5-flash-lite',  label:'Gemini 2.5 Flash Lite',tag:'free',    hint:'最輕量，免費額度最多' },
-      { id:'gemini-2.0-flash',       label:'Gemini 2.0 Flash',     tag:'fast',    hint:'穩定版，免費額度充裕' },
-      { id:'gemini-2.0-flash-lite',  label:'Gemini 2.0 Flash Lite',tag:'free',    hint:'輕量穩定版' },
-      { id:'gemini-1.5-pro',         label:'Gemini 1.5 Pro',       tag:'balance', hint:'上一代 Pro，仍可使用' },
-      { id:'gemini-1.5-flash',       label:'Gemini 1.5 Flash',     tag:'fast',    hint:'上一代 Flash，免費額度充裕' }
+      { id:'gemini-2.5-pro',         label:'Gemini 2.5 Pro',        tag:'quality', hint:'最強推理與創作，需付費方案' },
+      { id:'gemini-2.5-flash',       label:'Gemini 2.5 Flash',      tag:'balance', hint:'速度快、品質好，推薦首選' },
+      { id:'gemini-2.5-flash-lite',  label:'Gemini 2.5 Flash Lite', tag:'free',    hint:'最輕量，免費額度最多' },
+      { id:'gemini-2.0-flash',       label:'Gemini 2.0 Flash',      tag:'fast',    hint:'穩定版，免費額度充裕' },
+      { id:'gemini-2.0-flash-lite',  label:'Gemini 2.0 Flash Lite', tag:'free',    hint:'輕量穩定版' },
+      { id:'gemini-1.5-pro',         label:'Gemini 1.5 Pro',        tag:'balance', hint:'上一代 Pro，仍可使用' },
+      { id:'gemini-1.5-flash',       label:'Gemini 1.5 Flash',      tag:'fast',    hint:'上一代 Flash，免費額度充裕' }
     ],
-    models: [],         // 由偵測結果填入，初始為空
+    models: [],
     defaultIndex: 0
   },
   claude: {
@@ -623,23 +870,16 @@ function selectProvider(name) {
   document.getElementById('provider-info-' + name).style.display = 'block';
   document.getElementById('apiKey').value = '';
   document.getElementById('apiKey').placeholder = getKeyPlaceholder(name);
-
-  // 偵測按鈕：只有 Gemini 顯示
-  document.getElementById('detectBtn').style.display =
-    PROVIDERS[name].canDetect ? 'block' : 'none';
-
+  document.getElementById('detectBtn').style.display = PROVIDERS[name].canDetect ? 'block' : 'none';
   hideDetectStatus();
   renderModelSelect(name);
 }
 
-/* 渲染模型下拉選單 */
-function renderModelSelect(providerName, highlightFirst) {
+function renderModelSelect(providerName) {
   var provider = PROVIDERS[providerName];
   var select   = document.getElementById('modelSelect');
   var models   = provider.models;
-
   select.innerHTML = '';
-
   if (!models || models.length === 0) {
     var placeholder = document.createElement('option');
     placeholder.value = '';
@@ -648,7 +888,6 @@ function renderModelSelect(providerName, highlightFirst) {
     document.getElementById('modelHint').textContent = '';
     return;
   }
-
   models.forEach(function(m) {
     var opt = document.createElement('option');
     opt.value = m.id;
@@ -656,7 +895,6 @@ function renderModelSelect(providerName, highlightFirst) {
     opt.textContent = m.label + (tagText ? '  ' + tagText : '');
     select.appendChild(opt);
   });
-
   var defaultIdx = (typeof provider.defaultIndex === 'number') ? provider.defaultIndex : 0;
   select.selectedIndex = Math.min(defaultIdx, models.length - 1);
   onModelChange();
@@ -678,7 +916,6 @@ function getKeyPlaceholder(name) {
 }
 
 function onApiKeyInput() {
-  // 金鑰變更時，清除上次偵測結果（Gemini）
   if (currentProvider === 'gemini') {
     hideDetectStatus();
     PROVIDERS.gemini.models = [];
@@ -686,7 +923,6 @@ function onApiKeyInput() {
   }
 }
 
-/* 初始化：預設顯示 Grok，隱藏偵測按鈕 */
 document.getElementById('detectBtn').style.display = 'none';
 renderModelSelect('grok');
 
@@ -698,7 +934,7 @@ function toggleSettings() {
 }
 
 /* ══════════════════════════════════════════
-   ★ 自動偵測可用模型（Gemini ListModels）
+   ★ 自動偵測可用模型
    ══════════════════════════════════════════ */
 
 function showDetectStatus(type, msg) {
@@ -713,17 +949,13 @@ function hideDetectStatus() {
 async function detectModels() {
   var apiKey = document.getElementById('apiKey').value.trim();
   if (!apiKey) { alert('請先填入 API 金鑰'); return; }
-
   var provider = PROVIDERS[currentProvider];
   if (!provider.canDetect) return;
-
   var btn = document.getElementById('detectBtn');
   btn.disabled = true;
   btn.textContent = '偵測中…';
   showDetectStatus('loading', '<span class="spin">⏳</span>&nbsp;正在連接 API 偵測可用模型…');
-
   try {
-    /* 呼叫 Gemini ListModels */
     var url = provider.listEndpoint + '?key=' + apiKey + '&pageSize=50';
     var res = await fetch(url);
     if (!res.ok) {
@@ -734,56 +966,27 @@ async function detectModels() {
     }
     var data = await res.json();
     var allModels = data.models || [];
-
-    /* 篩選：只保留支援 generateContent 的模型 */
     var supported = allModels.filter(function(m) {
       return m.supportedGenerationMethods &&
              m.supportedGenerationMethods.indexOf('generateContent') >= 0;
-    }).map(function(m) {
-      /* name 格式是 "models/gemini-xxx"，取後半段 */
-      return m.name.replace('models/', '');
-    });
-
-    /* 對照 knownModels，保留已知且可用的，並補上標籤與說明 */
+    }).map(function(m) { return m.name.replace('models/', ''); });
     var matched = [];
     provider.knownModels.forEach(function(km) {
-      /* 完全比對 或 以此 id 為前綴（處理帶版本號的情況） */
-      var found = supported.find(function(s) {
-        return s === km.id || s.startsWith(km.id + '-');
-      });
-      if (found) {
-        matched.push({
-          id:    found,    // 用 API 回傳的真實 ID
-          label: km.label,
-          tag:   km.tag,
-          hint:  km.hint
-        });
-      }
+      var found = supported.find(function(s) { return s === km.id || s.startsWith(km.id + '-'); });
+      if (found) matched.push({ id: found, label: km.label, tag: km.tag, hint: km.hint });
     });
-
-    /* 若 API 回傳了 knownModels 沒有的模型，也加進去（去重） */
     supported.forEach(function(s) {
       var alreadyIn = matched.find(function(m) { return m.id === s; });
-      if (!alreadyIn && s.indexOf('gemini') >= 0) {
-        /* 只保留 gemini 系列，過濾掉 embedding/vision-only 等 */
+      if (!alreadyIn && s.indexOf('gemini') >= 0)
         matched.push({ id: s, label: s, tag: '', hint: '你的帳號可用的其他模型' });
-      }
     });
-
-    if (matched.length === 0) {
-      throw new Error('沒有找到支援 generateContent 的 Gemini 模型，請確認金鑰是否正確');
-    }
-
+    if (matched.length === 0) throw new Error('沒有找到支援 generateContent 的 Gemini 模型');
     provider.models = matched;
     provider.defaultIndex = 0;
     renderModelSelect(currentProvider);
-
-    showDetectStatus('ok',
-      '✅ 偵測完成！找到 <strong>' + matched.length + '</strong> 個可用模型，已自動選擇建議首選。');
-
+    showDetectStatus('ok', '✅ 偵測完成！找到 <strong>' + matched.length + '</strong> 個可用模型。');
   } catch (err) {
     showDetectStatus('err', '❌ 偵測失敗：' + err.message);
-    /* 偵測失敗時，載入備用清單 */
     provider.models = provider.knownModels.slice();
     renderModelSelect(currentProvider);
   } finally {
@@ -801,14 +1004,17 @@ var STORAGE_KEY = 'novelProfiles';
 
 function collectSettings() {
   return {
-    provider:   currentProvider,
-    model:      getCurrentModelId(),
-    novelTitle: document.getElementById('novelTitle').value,
-    genre:      document.getElementById('genre').value,
-    characters: document.getElementById('characters').value,
-    worldview:  document.getElementById('worldview').value,
-    styleReq:   document.getElementById('styleReq').value,
-    wordCount:  document.getElementById('wordCount').value
+    provider:    currentProvider,
+    model:       getCurrentModelId(),
+    novelTitle:  document.getElementById('novelTitle').value,
+    genre:       document.getElementById('genre').value,
+    characters:  document.getElementById('characters').value,
+    worldview:   document.getElementById('worldview').value,
+    styleReq:    document.getElementById('styleReq').value,
+    wordCount:   document.getElementById('wordCount').value,
+    storyMemo:   document.getElementById('storyMemo').value,
+    contextDepth: document.getElementById('contextDepth').value,
+    autoSummary: document.getElementById('autoSummaryToggle').checked
   };
 }
 
@@ -823,32 +1029,32 @@ function applySettings(s) {
       onModelChange();
     }
   }
-  document.getElementById('novelTitle').value = s.novelTitle  || '';
-  document.getElementById('genre').value      = s.genre       || '';
-  document.getElementById('characters').value = s.characters  || '';
-  document.getElementById('worldview').value  = s.worldview   || '';
-  document.getElementById('styleReq').value   = s.styleReq    || '';
-  document.getElementById('wordCount').value  = s.wordCount   || '1000';
+  document.getElementById('novelTitle').value  = s.novelTitle  || '';
+  document.getElementById('genre').value       = s.genre       || '';
+  document.getElementById('characters').value  = s.characters  || '';
+  document.getElementById('worldview').value   = s.worldview   || '';
+  document.getElementById('styleReq').value    = s.styleReq    || '';
+  document.getElementById('wordCount').value   = s.wordCount   || '1000';
+  document.getElementById('storyMemo').value   = s.storyMemo   || '';
+  document.getElementById('contextDepth').value = s.contextDepth || '5';
+  document.getElementById('autoSummaryToggle').checked = (s.autoSummary !== false);
 }
 
 function loadAllProfiles() {
   try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
   catch(e) { return []; }
 }
-
 function saveAllProfiles(profiles) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(profiles));
   flashAutosave();
 }
-
 function refreshProfileSelect(selectName) {
   var profiles = loadAllProfiles();
-  var sel      = document.getElementById('profileSelect');
+  var sel = document.getElementById('profileSelect');
   sel.innerHTML = '<option value="">— 選擇已儲存的設定 —</option>';
   profiles.forEach(function(p, i) {
     var opt = document.createElement('option');
-    opt.value = i;
-    opt.textContent = p.name;
+    opt.value = i; opt.textContent = p.name;
     sel.appendChild(opt);
   });
   if (selectName !== undefined) {
@@ -857,7 +1063,6 @@ function refreshProfileSelect(selectName) {
     }
   }
 }
-
 function loadSelectedProfile() {
   var idx = document.getElementById('profileSelect').value;
   if (idx === '') return;
@@ -865,15 +1070,12 @@ function loadSelectedProfile() {
   var p = profiles[parseInt(idx)];
   if (p) { applySettings(p.settings); showAutosaveLabel('已載入「' + p.name + '」'); }
 }
-
 function openSaveModal() {
-  document.getElementById('profileNameInput').value =
-    document.getElementById('novelTitle').value.trim() || '';
+  document.getElementById('profileNameInput').value = document.getElementById('novelTitle').value.trim() || '';
   document.getElementById('saveModal').classList.add('open');
   setTimeout(function() { document.getElementById('profileNameInput').focus(); }, 50);
 }
 function closeSaveModal() { document.getElementById('saveModal').classList.remove('open'); }
-
 function saveNewProfile() {
   var name = document.getElementById('profileNameInput').value.trim();
   if (!name) { alert('請輸入設定檔名稱'); return; }
@@ -884,7 +1086,6 @@ function saveNewProfile() {
   closeSaveModal();
   showAutosaveLabel('已儲存「' + name + '」');
 }
-
 function overwriteProfile() {
   var idx = parseInt(document.getElementById('profileSelect').value);
   if (isNaN(idx)) { alert('請先從下拉選單選擇要覆蓋的設定檔'); return; }
@@ -897,7 +1098,6 @@ function overwriteProfile() {
   refreshProfileSelect(name);
   showAutosaveLabel('已覆蓋「' + name + '」');
 }
-
 function deleteProfile() {
   var idx = parseInt(document.getElementById('profileSelect').value);
   if (isNaN(idx)) { alert('請先選擇要刪除的設定檔'); return; }
@@ -910,26 +1110,21 @@ function deleteProfile() {
   document.getElementById('profileSelect').value = '';
   showAutosaveLabel('已刪除「' + name + '」');
 }
-
 function exportProfile() {
-  var idx      = parseInt(document.getElementById('profileSelect').value);
+  var idx = parseInt(document.getElementById('profileSelect').value);
   var profiles = loadAllProfiles();
   var toExport, filename;
   if (!isNaN(idx) && profiles[idx]) {
-    toExport = profiles[idx];
-    filename = profiles[idx].name + '.json';
+    toExport = profiles[idx]; filename = profiles[idx].name + '.json';
   } else {
     var title = document.getElementById('novelTitle').value.trim() || '小說設定';
-    toExport  = { name: title, settings: collectSettings() };
-    filename  = title + '.json';
+    toExport = { name: title, settings: collectSettings() }; filename = title + '.json';
   }
   var blob = new Blob([JSON.stringify(toExport, null, 2)], { type:'application/json;charset=utf-8' });
-  var url  = URL.createObjectURL(blob);
-  var a    = document.createElement('a');
-  a.href = url; a.download = filename; a.click();
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a'); a.href = url; a.download = filename; a.click();
   URL.revokeObjectURL(url);
 }
-
 function importProfile(event) {
   var file = event.target.files[0];
   if (!file) return;
@@ -943,9 +1138,7 @@ function importProfile(event) {
       if (existing >= 0) {
         if (!confirm('已有同名設定檔「' + data.name + '」，要覆蓋嗎？')) return;
         profiles[existing] = data;
-      } else {
-        profiles.push(data);
-      }
+      } else { profiles.push(data); }
       saveAllProfiles(profiles);
       refreshProfileSelect(data.name);
       applySettings(data.settings);
@@ -955,7 +1148,6 @@ function importProfile(event) {
   };
   reader.readAsText(file);
 }
-
 function flashAutosave() {
   var dot = document.getElementById('autosaveDot');
   dot.classList.add('show');
@@ -967,14 +1159,9 @@ function showAutosaveLabel(msg) {
   flashAutosave();
   setTimeout(function() { el.textContent = '設定檔存在瀏覽器中，換電腦請用「匯出」備份'; }, 3000);
 }
-
-document.getElementById('profileNameInput').addEventListener('keydown', function(e) {
-  if (e.key === 'Enter') saveNewProfile();
-});
-document.getElementById('saveModal').addEventListener('click', function(e) {
-  if (e.target === this) closeSaveModal();
-});
-
+document.getElementById('profileNameInput').addEventListener('keydown', function(e) { if (e.key === 'Enter') saveNewProfile(); });
+document.getElementById('saveModal').addEventListener('click', function(e) { if (e.target === this) closeSaveModal(); });
+document.getElementById('exportModal').addEventListener('click', function(e) { if (e.target === this) closeExportModal(); });
 refreshProfileSelect();
 
 
@@ -982,18 +1169,30 @@ refreshProfileSelect();
    ④ 提示詞 + API 呼叫區
    ══════════════════════════════════════════ */
 
+function buildSummaryContext() {
+  var depth = parseInt(document.getElementById('contextDepth').value) || 5;
+  var relevant = chapters.filter(function(ch) { return ch.summary; });
+  var slice = relevant.slice(-depth);
+  if (slice.length === 0) return '';
+  return '\n\n【前情摘要（依章節順序）】\n' + slice.map(function(ch) {
+    return '第 ' + ch.num + ' 章：' + ch.summary;
+  }).join('\n');
+}
+
 function buildSystemPrompt(chapterNum) {
-  var title      = document.getElementById('novelTitle').value.trim() || '（未命名）';
-  var genre      = document.getElementById('genre').value.trim()       || '不限';
-  var characters = document.getElementById('characters').value.trim()  || '未設定';
-  var worldview  = document.getElementById('worldview').value.trim()   || '未設定';
-  var styleReq   = document.getElementById('styleReq').value.trim()    || '流暢自然';
+  var title      = document.getElementById('novelTitle').value.trim()   || '（未命名）';
+  var genre      = document.getElementById('genre').value.trim()         || '不限';
+  var characters = document.getElementById('characters').value.trim()    || '未設定';
+  var worldview  = document.getElementById('worldview').value.trim()     || '未設定';
+  var styleReq   = document.getElementById('styleReq').value.trim()      || '流暢自然';
+  var storyMemo  = document.getElementById('storyMemo').value.trim();
   var wordCount  = document.getElementById('wordCount').value;
 
-  var continuityContext = '';
-  if (chapters.length > 0) {
-    continuityContext = '\n\n【上一章結尾（供銜接參考）】\n' + chapters[chapters.length - 1].content.slice(-200);
-  }
+  var summaryCtx = buildSummaryContext();
+
+  var memoSection = storyMemo
+    ? '\n\n【故事備忘錄（重要伏筆與人物狀態）】\n' + storyMemo
+    : '';
 
   return '你是一位專業的繁體中文小說作家，正在撰寫連載小說的第 ' + chapterNum + ' 章。\n\n'
     + '【小說標題】' + title + '\n'
@@ -1001,18 +1200,24 @@ function buildSystemPrompt(chapterNum) {
     + '【主要人物設定】\n' + characters + '\n'
     + '【世界觀與背景】\n' + worldview + '\n'
     + '【寫作風格要求】\n' + styleReq
-    + continuityContext + '\n\n'
+    + memoSection
+    + summaryCtx + '\n\n'
     + '【寫作規則】\n'
     + '- 語言：繁體中文\n'
     + '- 字數：約 ' + wordCount + ' 字（不超過 ' + Math.round(parseInt(wordCount) * 1.25) + ' 字）\n'
     + '- 直接開始正文，不要輸出章節標題或任何前言\n'
     + '- 融合場景描寫、人物內心獨白與對話\n'
     + '- 結尾帶有往下延伸的張力或懸念\n'
-    + '- 保持人物性格與前章一致';
+    + '- 保持人物性格與前章摘要一致';
 }
 
 function buildUserMessage(chapterNum, outline) {
   return '【第 ' + chapterNum + ' 章大綱】\n' + outline + '\n\n請根據以上大綱撰寫這一章。';
+}
+
+function buildSummaryPrompt(chapterNum, content) {
+  return '請用 120～150 字的繁體中文，為以下第 ' + chapterNum + ' 章的內容寫一段客觀、精簡的情節摘要。' +
+    '只寫發生了什麼事，不需要評論文筆，不要有前言或後語，直接輸出摘要內容。\n\n' + content;
 }
 
 function buildOpenAIBody(systemPrompt, userMsg, modelId) {
@@ -1030,7 +1235,6 @@ function buildClaudeBody(systemPrompt, userMsg, modelId) {
   return JSON.stringify({ model: modelId, max_tokens: 2500, system: systemPrompt,
     messages: [{ role:'user', content: userMsg }] });
 }
-
 function buildHeaders(apiKey, providerName) {
   if (providerName === 'grok')
     return { 'Content-Type':'application/json', 'Authorization':'Bearer ' + apiKey };
@@ -1041,39 +1245,63 @@ function buildHeaders(apiKey, providerName) {
       'anthropic-version':'2023-06-01', 'anthropic-dangerous-direct-browser-access':'true' };
   return { 'Content-Type':'application/json' };
 }
-
 function buildEndpoint(provider, providerName, apiKey, modelId) {
   if (providerName === 'gemini')
     return provider.endpoint.replace('{MODEL}', modelId) + '?key=' + apiKey;
   return provider.endpoint;
 }
-
 function extractContent(data, providerName) {
   if (providerName === 'grok')   return data.choices[0].message.content.trim();
   if (providerName === 'claude') return data.content[0].text.trim();
   if (providerName === 'gemini') return data.candidates[0].content.parts[0].text.trim();
   return '';
 }
-
-/* ── 友善的錯誤訊息解析 ── */
 function parseErrorMessage(err, providerName) {
   var msg = err.message || String(err);
-  /* Gemini 額度用完 */
-  if (msg.indexOf('RESOURCE_EXHAUSTED') >= 0 || msg.indexOf('quota') >= 0 || msg.indexOf('Quota') >= 0) {
-    return '❌ API 額度已用完。\n' +
-      '• 若使用免費方案：請等待每日額度重置（通常次日太平洋時間 0 點）\n' +
-      '• 或在 Google AI Studio 升級至付費方案\n' +
-      '• 或改用其他供應商（Grok / Claude）';
-  }
-  /* Gemini 模型不存在 */
-  if (msg.indexOf('not found') >= 0 || msg.indexOf('NOT_FOUND') >= 0) {
-    return '❌ 模型不存在或你的帳號無法使用此模型。\n請點「偵測可用模型」重新取得你的帳號可用清單。';
-  }
-  /* 金鑰無效 */
-  if (msg.indexOf('API_KEY_INVALID') >= 0 || msg.indexOf('401') >= 0 || msg.indexOf('Unauthorized') >= 0) {
+  if (msg.indexOf('RESOURCE_EXHAUSTED') >= 0 || msg.indexOf('quota') >= 0 || msg.indexOf('Quota') >= 0)
+    return '❌ API 額度已用完。請等待每日額度重置，或升級至付費方案。';
+  if (msg.indexOf('not found') >= 0 || msg.indexOf('NOT_FOUND') >= 0)
+    return '❌ 模型不存在或你的帳號無法使用此模型。請點「偵測可用模型」重新取得清單。';
+  if (msg.indexOf('API_KEY_INVALID') >= 0 || msg.indexOf('401') >= 0 || msg.indexOf('Unauthorized') >= 0)
     return '❌ API 金鑰無效，請確認金鑰是否正確且未過期。';
-  }
   return '❌ 錯誤：' + msg;
+}
+
+/* ── 呼叫 API 的通用函式 ── */
+async function callAPI(systemPrompt, userMsg) {
+  var apiKey  = document.getElementById('apiKey').value.trim();
+  var modelId = getCurrentModelId();
+  var provider = PROVIDERS[currentProvider];
+  var response = await fetch(
+    buildEndpoint(provider, currentProvider, apiKey, modelId),
+    { method:'POST', headers: buildHeaders(apiKey, currentProvider),
+      body: provider.buildBody(systemPrompt, userMsg, modelId) }
+  );
+  if (!response.ok) {
+    var errData = await response.json().catch(function() { return {}; });
+    var errMsg = 'HTTP ' + response.status;
+    if (errData.error && errData.error.message) errMsg = errData.error.message;
+    else if (errData.message) errMsg = errData.message;
+    throw new Error(errMsg);
+  }
+  var data = await response.json();
+  return extractContent(data, currentProvider);
+}
+
+/* ── 自動摘要 ── */
+async function generateSummary(chapterNum, content) {
+  if (!document.getElementById('autoSummaryToggle').checked) return null;
+  try {
+    var summaryPrompt = buildSummaryPrompt(chapterNum, content);
+    // 摘要呼叫：用簡單的 system + user
+    var summary = await callAPI(
+      '你是一個專業的繁體中文小說內容摘要助理。請精簡客觀地摘要故事情節。',
+      summaryPrompt
+    );
+    return summary;
+  } catch(e) {
+    return null; // 摘要失敗不影響主流程
+  }
 }
 
 
@@ -1081,9 +1309,11 @@ function parseErrorMessage(err, providerName) {
    ⑤ 章節管理區
    ══════════════════════════════════════════ */
 
-var chapters = [];
+var chapters     = [];
 var currentIndex = -1;
+var retryIndex   = -1;   // 正在重試的章節 index（-1 = 非重試模式）
 
+/* ── 產生新章節 ── */
 async function generateChapter() {
   var apiKey  = document.getElementById('apiKey').value.trim();
   var outline = document.getElementById('chapterOutline').value.trim();
@@ -1095,37 +1325,46 @@ async function generateChapter() {
 
   var btn = document.getElementById('generateBtn');
   btn.disabled = true;
+  document.getElementById('regenBtn').disabled = true;
 
   var provider   = PROVIDERS[currentProvider];
   var models     = provider.models || [];
   var modelInfo  = models.find(function(m) { return m.id === modelId; });
   var modelLabel = modelInfo ? modelInfo.label : modelId;
 
-  setStatus('使用 ' + provider.name + ' · ' + modelLabel + ' 生成中，請稍候…');
+  var chapterNum;
+  if (retryIndex >= 0) {
+    chapterNum = chapters[retryIndex].num;
+    setStatus('重新生成第 ' + chapterNum + ' 章中（' + provider.name + ' · ' + modelLabel + '）…');
+  } else {
+    chapterNum = chapters.length + 1;
+    setStatus('使用 ' + provider.name + ' · ' + modelLabel + ' 生成第 ' + chapterNum + ' 章中，請稍候…');
+  }
 
-  var chapterNum   = chapters.length + 1;
   var systemPrompt = buildSystemPrompt(chapterNum);
   var userMsg      = buildUserMessage(chapterNum, outline);
 
   try {
-    var response = await fetch(
-      buildEndpoint(provider, currentProvider, apiKey, modelId),
-      { method:'POST', headers: buildHeaders(apiKey, currentProvider),
-        body: provider.buildBody(systemPrompt, userMsg, modelId) }
-    );
-    if (!response.ok) {
-      var errData = await response.json().catch(function() { return {}; });
-      var errMsg = 'HTTP ' + response.status;
-      if (errData.error && errData.error.message) errMsg = errData.error.message;
-      else if (errData.message) errMsg = errData.message;
-      throw new Error(errMsg);
-    }
-    var data    = await response.json();
-    var content = extractContent(data, currentProvider);
+    var content = await callAPI(systemPrompt, userMsg);
 
-    chapters.push({ num: chapterNum, outline: outline, content: content,
-      provider: provider.name, model: modelLabel });
-    currentIndex = chapters.length - 1;
+    setStatus('生成完成，正在產生章節摘要…');
+    var summary = await generateSummary(chapterNum, content);
+
+    var chapterData = {
+      num: chapterNum, outline: outline, content: content,
+      provider: provider.name, model: modelLabel,
+      summary: summary || null
+    };
+
+    if (retryIndex >= 0) {
+      // 取代原章節
+      chapters[retryIndex] = chapterData;
+      currentIndex = retryIndex;
+      cancelRetry();
+    } else {
+      chapters.push(chapterData);
+      currentIndex = chapters.length - 1;
+    }
 
     showChapter(currentIndex);
     updateHistory();
@@ -1136,21 +1375,70 @@ async function generateChapter() {
     setStatus(parseErrorMessage(err, currentProvider), 'err');
   } finally {
     btn.disabled = false;
+    document.getElementById('regenBtn').disabled = false;
   }
 }
 
+/* ── 重新生成（同大綱再試） ── */
+async function regenChapter() {
+  if (currentIndex < 0) return;
+  var ch = chapters[currentIndex];
+  document.getElementById('chapterOutline').value = ch.outline;
+  retryIndex = currentIndex;
+  // 讓 retryIndex 指向當前，再呼叫 generateChapter
+  await generateChapter();
+}
+
+/* ── 修改大綱重試 ── */
+function retryCurrentChapter() {
+  if (currentIndex < 0) return;
+  var ch = chapters[currentIndex];
+  retryIndex = currentIndex;
+  document.getElementById('chapterOutline').value = ch.outline;
+  document.getElementById('retryNotice').classList.add('show');
+  document.getElementById('retryChapterNum').textContent = ch.num;
+  document.getElementById('generateBtn').style.display = 'none';
+  document.getElementById('regenBtn').style.display = 'inline-block';
+  document.getElementById('chapterOutline').focus();
+  window.scrollTo({ top: document.getElementById('chapterOutline').getBoundingClientRect().top + window.scrollY - 80, behavior: 'smooth' });
+}
+
+function cancelRetry() {
+  retryIndex = -1;
+  document.getElementById('retryNotice').classList.remove('show');
+  document.getElementById('generateBtn').style.display = 'inline-block';
+  document.getElementById('regenBtn').style.display = 'none';
+  document.getElementById('chapterOutline').value = '';
+}
+
+/* ── 顯示章節 ── */
 function showChapter(index) {
   var ch = chapters[index];
   currentIndex = index;
-  document.getElementById('outputCard').style.display   = 'block';
-  document.getElementById('chapterMeta').textContent    = '第 ' + ch.num + ' 章　·　' + ch.provider + ' · ' + ch.model;
+  document.getElementById('outputCard').style.display = 'block';
+  document.getElementById('chapterMeta').textContent  = '第 ' + ch.num + ' 章　·　' + ch.provider + ' · ' + ch.model;
   document.getElementById('outlinePreview').textContent = '大綱：' + ch.outline;
-  document.getElementById('outputBox').textContent      = ch.content;
+
+  // 確保退出編輯模式
+  cancelEdit();
+  document.getElementById('outputBox').textContent = ch.content;
+
+  // 摘要
+  var summarySection = document.getElementById('summarySection');
+  var summaryBox     = document.getElementById('summaryBox');
+  if (ch.summary) {
+    summaryBox.textContent = ch.summary;
+    summarySection.style.display = 'block';
+  } else {
+    summarySection.style.display = 'none';
+  }
+
   document.querySelectorAll('.history-item').forEach(function(el, i) {
     el.classList.toggle('active', chapters.length - 1 - i === index);
   });
 }
 
+/* ── 更新歷史列表 ── */
 function updateHistory() {
   document.getElementById('historyCard').style.display = 'block';
   document.getElementById('histCount').textContent     = chapters.length;
@@ -1158,12 +1446,121 @@ function updateHistory() {
   listEl.innerHTML = chapters.slice().reverse().map(function(ch, reversedI) {
     var originalIndex = chapters.length - 1 - reversedI;
     var preview = ch.outline.slice(0, 40) + (ch.outline.length > 40 ? '…' : '');
+    var badge   = ch.summary ? '<span class="history-summary-badge">有摘要</span>' : '';
     return '<div class="history-item ' + (originalIndex === currentIndex ? 'active' : '') + '" '
       + 'onclick="showChapter(' + originalIndex + ')">'
       + '<span class="history-num">第 ' + ch.num + ' 章</span>'
-      + '<span class="history-preview">' + preview + '</span></div>';
+      + '<span class="history-preview">' + preview + '</span>'
+      + badge + '</div>';
   }).join('');
 }
+
+/* ══════════════════════════════════════════
+   ★ 編輯內容功能
+   ══════════════════════════════════════════ */
+
+var editMode = false;
+
+function toggleEdit() {
+  if (editMode) {
+    saveEdit();
+  } else {
+    startEdit();
+  }
+}
+
+function startEdit() {
+  editMode = true;
+  var box = document.getElementById('outputBox');
+  box.contentEditable = 'true';
+  box.focus();
+  document.getElementById('editToolbar').classList.add('show');
+  document.getElementById('editToggleBtn').textContent = '💾 儲存編輯';
+}
+
+function saveEdit() {
+  if (currentIndex < 0) return;
+  var box = document.getElementById('outputBox');
+  var newContent = box.innerText; // 取純文字
+  chapters[currentIndex].content = newContent;
+  cancelEdit();
+  setStatus('已儲存編輯！', 'ok');
+  setTimeout(function() { setStatus(''); }, 2000);
+}
+
+function cancelEdit() {
+  editMode = false;
+  var box = document.getElementById('outputBox');
+  box.contentEditable = 'false';
+  document.getElementById('editToolbar').classList.remove('show');
+  document.getElementById('editToggleBtn').textContent = '✏️ 編輯內容';
+}
+
+/* ══════════════════════════════════════════
+   ★ 打包匯出功能
+   ══════════════════════════════════════════ */
+
+function openExportModal() {
+  if (!chapters.length) { setStatus('還沒有任何章節可匯出', 'err'); return; }
+  var listEl = document.getElementById('exportChapterList');
+  listEl.innerHTML = chapters.map(function(ch, i) {
+    var preview = ch.outline.slice(0, 30) + (ch.outline.length > 30 ? '…' : '');
+    return '<label class="export-chapter-item">'
+      + '<input type="checkbox" class="export-checkbox" data-index="' + i + '" checked />'
+      + '<span style="min-width:56px;font-weight:500;color:var(--accent)">第 ' + ch.num + ' 章</span>'
+      + '<span style="color:var(--text-muted);font-size:12px;">' + preview + '</span>'
+      + '</label>';
+  }).join('');
+  document.getElementById('exportModal').classList.add('open');
+}
+function closeExportModal() { document.getElementById('exportModal').classList.remove('open'); }
+
+function exportSelectAll() {
+  document.querySelectorAll('.export-checkbox').forEach(function(cb) { cb.checked = true; });
+}
+function exportSelectNone() {
+  document.querySelectorAll('.export-checkbox').forEach(function(cb) { cb.checked = false; });
+}
+function exportSelectLast(n) {
+  var cbs = document.querySelectorAll('.export-checkbox');
+  cbs.forEach(function(cb, i) { cb.checked = (i >= cbs.length - n); });
+}
+
+function doExport() {
+  var selected = [];
+  document.querySelectorAll('.export-checkbox').forEach(function(cb) {
+    if (cb.checked) selected.push(chapters[parseInt(cb.dataset.index)]);
+  });
+  if (!selected.length) { alert('請至少勾選一章'); return; }
+
+  var fmt        = document.querySelector('input[name="exportFmt"]:checked').value;
+  var inclSum    = document.querySelector('input[name="exportSummary"]:checked').value === 'yes';
+  var title      = document.getElementById('novelTitle').value.trim() || '連載小說';
+  var separator  = fmt === 'md' ? '\n\n---\n\n' : '\n\n────────────\n\n';
+
+  var parts = selected.map(function(ch) {
+    var head = fmt === 'md' ? '## 第 ' + ch.num + ' 章\n\n' : '第 ' + ch.num + ' 章\n\n';
+    var body = head + ch.content;
+    if (inclSum && ch.summary) {
+      body += (fmt === 'md' ? '\n\n> **摘要：**' + ch.summary : '\n\n【摘要】' + ch.summary);
+    }
+    return body;
+  });
+
+  var all      = parts.join(separator);
+  var ext      = fmt === 'md' ? '.md' : '.txt';
+  var mime     = 'text/plain;charset=utf-8';
+  var blob     = new Blob([all], { type: mime });
+  var url      = URL.createObjectURL(blob);
+  var a        = document.createElement('a');
+  a.href = url; a.download = title + ext; a.click();
+  URL.revokeObjectURL(url);
+  closeExportModal();
+}
+
+/* ══════════════════════════════════════════
+   ★ 複製功能
+   ══════════════════════════════════════════ */
 
 function copyChapter() {
   if (currentIndex < 0) return;
@@ -1171,30 +1568,6 @@ function copyChapter() {
     setStatus('已複製本章！', 'ok');
     setTimeout(function() { setStatus(''); }, 2000);
   });
-}
-
-function copyAll() {
-  if (!chapters.length) return;
-  var all = chapters.map(function(ch) {
-    return '第 ' + ch.num + ' 章\n\n' + ch.content;
-  }).join('\n\n────────────\n\n');
-  navigator.clipboard.writeText(all).then(function() {
-    setStatus('已複製全文！', 'ok');
-    setTimeout(function() { setStatus(''); }, 2000);
-  });
-}
-
-function exportTxt() {
-  if (!chapters.length) { setStatus('還沒有任何章節可匯出', 'err'); return; }
-  var title = document.getElementById('novelTitle').value.trim() || '連載小說';
-  var all   = chapters.map(function(ch) {
-    return '第 ' + ch.num + ' 章\n\n' + ch.content;
-  }).join('\n\n────────────\n\n');
-  var blob = new Blob([all], { type:'text/plain;charset=utf-8' });
-  var url  = URL.createObjectURL(blob);
-  var a    = document.createElement('a');
-  a.href = url; a.download = title + '.txt'; a.click();
-  URL.revokeObjectURL(url);
 }
 
 function setStatus(msg, type) {
